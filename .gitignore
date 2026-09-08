@@ -1,0 +1,14 @@
+/DisconnectionPage/
+/FinFlow/
+/Landing Page/
+/Webapp Clock/
+/ehconnect/
+node_modules/
+dist/
+build/
+.cache/
+.turbo/
+target/
+coverage/
+tmp/
+temp/
