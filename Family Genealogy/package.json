@@ -1,0 +1,46 @@
+{
+  "name": "family-archive",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "postinstall": "prisma generate",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "db:seed": "node prisma/seed.mjs",
+    "test": "vitest run",
+    "test:unit": "vitest run tests/genealogy.test.ts tests/gedcom.test.ts",
+    "test:api": "vitest run tests/api.workflow.test.ts"
+  },
+  "prisma": {
+    "seed": "node prisma/seed.mjs"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.19.1",
+    "@xyflow/react": "^12.3.5",
+    "bcryptjs": "^2.4.3",
+    "busboy": "^1.6.0",
+    "dayjs": "^1.11.13",
+    "jose": "^5.6.3",
+    "next": "^14.2.15",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "sharp": "^0.33.4"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/busboy": "^1.5.4",
+    "@types/node": "^20.14.0",
+    "@types/react": "^18.3.5",
+    "@types/react-dom": "^18.3.0",
+    "autoprefixer": "^10.4.20",
+    "playwright-core": "^1.63.0",
+    "postcss": "^8.4.41",
+    "prisma": "^5.19.1",
+    "tailwindcss": "^3.4.10",
+    "typescript": "^5.5.4",
+    "vitest": "^3.2.7"
+  }
+}
