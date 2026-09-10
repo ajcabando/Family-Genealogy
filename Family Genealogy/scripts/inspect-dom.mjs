@@ -1,6 +1,6 @@
 import { chromium } from 'playwright-core';
 
-const BASE = process.argv[2] || 'http://localhost:3000';
+const BASE = process.argv[2] || 'http://localhost:3844';
 const browser = await chromium.launch({ channel: 'chrome', headless: true });
 const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
 const loginRes = await fetch(`${BASE}/api/auth/login`, {

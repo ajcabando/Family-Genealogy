@@ -93,6 +93,7 @@ model FamilyMember {
 
   user              User?        @relation("UserMember")
   photoTags         PhotoTag[]
+  photoComments     PhotoComment[]
   photosUploaded    Photo[]      @relation("UploadedByMember")
   relationshipsAs1  Relationship[] @relation("RelPerson")
   relationshipsAs2  Relationship[] @relation("RelRelated")
@@ -168,6 +169,7 @@ model Photo {
   updatedAt      DateTime     @updatedAt
 
   tags            PhotoTag[]
+  comments        PhotoComment[]
   albums          AlbumPhoto[]
   profileFor      FamilyMember[] @relation("MemberProfilePhoto")
   coverForReunion ReunionEvent[] @relation("ReunionCover")
@@ -189,6 +191,21 @@ model PhotoTag {
 
   @@unique([photoId, memberId])
   @@index([memberId])
+}
+
+model PhotoComment {
+  id          String       @id @default(cuid())
+  photoId     String
+  authorId    String
+  body        String
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  photo       Photo        @relation(fields: [photoId], references: [id], onDelete: Cascade)
+  author      FamilyMember @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([photoId, createdAt])
+  @@index([authorId])
 }
 
 // ---------------------------------------------------------------------------
@@ -305,6 +322,7 @@ enum NotificationType {
   APPROVAL_RESULT
   PHOTO_APPROVAL
   TAG
+  COMMENT
   NEW_REUNION
   NEW_MEMBER
   TREE_UPDATE

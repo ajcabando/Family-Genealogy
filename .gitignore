@@ -12,3 +12,5 @@ target/
 coverage/
 tmp/
 temp/
+
+.opencode/

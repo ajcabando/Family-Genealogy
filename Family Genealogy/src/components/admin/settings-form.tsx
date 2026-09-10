@@ -39,7 +39,7 @@ export function SettingsForm({ settings, familyName }: { settings: Record<string
   const toggle = (key: string) => setValues((prev) => ({ ...prev, [key]: prev[key] === 'true' ? 'false' : 'true' }));
 
   return (
-    <div className="space-y-6">
+    <div className="min-w-0 space-y-6">
       <div className="card p-5">
         <h2 className="mb-4 font-display text-lg font-bold text-ink">General</h2>
         <div className="max-w-md">
@@ -116,7 +116,7 @@ export function BackupSection() {
   }
 
   return (
-    <div className="card p-5">
+    <div className="card min-w-0 p-5">
       <h2 className="mb-2 font-display text-lg font-bold text-ink">Backup &amp; Restore</h2>
       <p className="text-sm text-inkSoft">
         Your family&apos;s history is precious — keep regular backups. Several options are available:

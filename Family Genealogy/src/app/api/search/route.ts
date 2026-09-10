@@ -3,7 +3,8 @@ import { prisma } from '@/lib/db';
 import { apiAuth } from '@/lib/api-helpers';
 
 export async function GET(req: NextRequest) {
-  const auth = await apiAuth(req);
+  // Public: anyone can search the family directory.
+  const auth = await apiAuth(req, { publicGet: true });
   if (auth instanceof Response) return auth;
 
   const q = (new URL(req.url).searchParams.get('q') || '').trim().toLowerCase();

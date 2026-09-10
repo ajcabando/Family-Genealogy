@@ -21,7 +21,7 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends fonts-dejavu-core openssl curl && rm -rf /var/lib/apt/lists/*
 ENV NODE_ENV=production \
     NEXT_TELEMETRY_DISABLED=1 \
-    PORT=3000 \
+    PORT=3844 \
     HOSTNAME=0.0.0.0
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
@@ -36,5 +36,5 @@ COPY package.json ./package.json
 RUN npm install --omit=dev --ignore-scripts --no-save bcryptjs sharp
 COPY entrypoint.sh ./entrypoint.sh
 RUN chmod +x ./entrypoint.sh
-EXPOSE 3000
+EXPOSE 3844
 ENTRYPOINT ["./entrypoint.sh"]

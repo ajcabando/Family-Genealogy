@@ -22,6 +22,7 @@ export function UploadModal({
 }) {
   const router = useRouter();
   const fileInput = useRef<HTMLInputElement>(null);
+  const cameraInput = useRef<HTMLInputElement>(null);
   const [files, setFiles] = useState<File[]>([]);
   const [caption, setCaption] = useState('');
   const [photoDate, setPhotoDate] = useState('');
@@ -109,17 +110,47 @@ export function UploadModal({
               }}
               onClick={() => fileInput.current?.click()}
               className={cn(
-                'flex cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed px-4 py-10 text-center transition',
+                'flex cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed px-4 py-8 text-center transition',
                 dragOver ? 'border-gold bg-gold/5' : 'border-line bg-cream hover:border-goldLight',
               )}
             >
               <Icon name="upload" className="h-8 w-8 text-goldDeep" />
-              <p className="text-sm font-semibold text-ink">Drag & drop photos here, or click to browse</p>
-              <p className="text-xs text-inkSoft">JPG, PNG, WEBP, HEIC · works great from your phone</p>
+              <p className="text-sm font-semibold text-ink">Drag & drop photos here, or tap to browse</p>
+              <p className="text-xs text-inkSoft">JPG, PNG, WEBP, HEIC</p>
               <input
                 ref={fileInput}
                 type="file"
                 accept="image/*"
+                multiple
+                className="hidden"
+                onChange={(e) => addFiles(e.target.files)}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  cameraInput.current?.click();
+                }}
+                className="btn-gold w-full"
+              >
+                <Icon name="camera" className="h-4 w-4" /> Take photo
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  fileInput.current?.click();
+                }}
+                className="btn-ghost w-full"
+              >
+                <Icon name="photo" className="h-4 w-4" /> Choose photos
+              </button>
+              <input
+                ref={cameraInput}
+                type="file"
+                accept="image/*"
+                capture="environment"
                 multiple
                 className="hidden"
                 onChange={(e) => addFiles(e.target.files)}

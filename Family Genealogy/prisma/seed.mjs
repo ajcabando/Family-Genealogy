@@ -4,68 +4,15 @@ import sharp from 'sharp';
 import { randomUUID } from 'node:crypto';
 import path from 'node:path';
 import fs from 'node:fs';
+import { avatarSvg, sceneSvg, groupPhotoSvg } from './sample-images.mjs';
 
 const prisma = new PrismaClient();
 const UPLOAD_DIR = process.env.UPLOAD_DIR || path.join(process.cwd(), 'data', 'uploads');
 
 // ---------------------------------------------------------------------------
 // Image generation (SVG → sharp). Simple shapes + text; no external assets.
+// Generators live in ./sample-images.mjs (shared with the reunion filler).
 // ---------------------------------------------------------------------------
-
-const AVATAR_PALETTE = {
-  MALE: ['#dbe3ea', '#8fa3b5', '#3d4a57'],
-  FEMALE: ['#f3e3e0', '#d9a99f', '#6e4238'],
-  OTHER: ['#e4ead9', '#a9bb93', '#4a5a38'],
-  UNKNOWN: ['#efe8dc', '#c9b491', '#6b5737'],
-};
-
-function avatarSvg(member) {
-  const [bg1, bg2, ink] = AVATAR_PALETTE[member.gender] || AVATAR_PALETTE.UNKNOWN;
-  const initials = `${(member.firstName || '?')[0]}${(member.lastName || '?')[0]}`.toUpperCase();
-  const deceased = member.deathDate ? ' saturate(0.35)' : '';
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="320" height="320" viewBox="0 0 320 320">
-  <defs>
-    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="${bg1}"/>
-      <stop offset="1" stop-color="${bg2}"/>
-    </linearGradient>
-  </defs>
-  <rect width="320" height="320" fill="url(#g)" style="filter:${deceased}"/>
-  <circle cx="160" cy="118" r="52" fill="rgba(255,255,255,0.75)"/>
-  <circle cx="160" cy="118" r="52" fill="none" stroke="rgba(0,0,0,0.08)" stroke-width="3"/>
-  <rect x="52" y="196" width="216" height="52" rx="26" fill="rgba(255,255,255,0.55)"/>
-  <text x="160" y="133" font-family="Georgia, serif" font-size="52" font-weight="bold" fill="${ink}" text-anchor="middle">${initials}</text>
-  <text x="160" y="232" font-family="Georgia, serif" font-size="24" fill="${ink}" text-anchor="middle">${escapeXml(member.firstName)} ${escapeXml(member.lastName)}</text>
-</svg>`;
-}
-
-function sceneSvg({ title, sub, hue, w = 1280, h = 854 }) {
-  const [sky1, sky2, land, accent] = hue;
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
-  <defs>
-    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="${sky1}"/>
-      <stop offset="1" stop-color="${sky2}"/>
-    </linearGradient>
-    <radialGradient id="sun" cx="0.5" cy="0.5" r="0.5">
-      <stop offset="0" stop-color="#fff8e7" stop-opacity="0.95"/>
-      <stop offset="1" stop-color="#fff8e7" stop-opacity="0"/>
-    </radialGradient>
-  </defs>
-  <rect width="${w}" height="${h}" fill="url(#sky)"/>
-  <circle cx="${w * 0.72}" cy="${h * 0.3}" r="${Math.min(w, h) * 0.22}" fill="url(#sun)"/>
-  <path d="M0 ${h * 0.62} Q ${w * 0.25} ${h * 0.5} ${w * 0.5} ${h * 0.62} T ${w} ${h * 0.58} L ${w} ${h} L 0 ${h} Z" fill="${land}" opacity="0.85"/>
-  <path d="M0 ${h * 0.75} Q ${w * 0.33} ${h * 0.64} ${w * 0.66} ${h * 0.76} T ${w} ${h * 0.72} L ${w} ${h} L 0 ${h} Z" fill="${land}" opacity="0.55"/>
-  <rect x="0" y="${h * 0.68}" width="${w}" height="${h * 0.32}" fill="rgba(255,255,255,0.25)"/>
-  <text x="${w / 2}" y="${h * 0.4}" font-family="Georgia, serif" font-size="${Math.round(h * 0.07)}" font-weight="bold" fill="#3a2f22" text-anchor="middle">${escapeXml(title)}</text>
-  <text x="${w / 2}" y="${h * 0.4 + Math.round(h * 0.085)}" font-family="Georgia, serif" font-size="${Math.round(h * 0.04)}" fill="#5c4a33" text-anchor="middle">${escapeXml(sub)}</text>
-  <rect x="${w / 2 - Math.round(w * 0.06)}" y="${h * 0.4 - Math.round(h * 0.015)}" width="${Math.round(w * 0.12)}" height="4" fill="${accent}" rx="2"/>
-</svg>`;
-}
-
-function escapeXml(s) {
-  return String(s ?? '').replace(/[<>&'"]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', "'": '&apos;', '"': '&quot;' }[c]));
-}
 
 async function saveImage(svg, target) {
   const id = randomUUID();
@@ -362,7 +309,7 @@ async function main() {
     ];
     for (let i = 0; i < a.photos; i++) {
       const img = await saveImage(
-        sceneSvg({ title: `${a.name}`, sub: `2025 Reunion · photo ${i + 1}`, hue: palette[ai % palette.length] }),
+        groupPhotoSvg({ title: `${a.name}`, sub: `2025 Reunion · ${new Date(2025, 11, 27 + i).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` }),
         {},
       );
       const photo = await prisma.photo.create({
@@ -382,11 +329,30 @@ async function main() {
   await Promise.all(albumPhotoRows);
 
   const albums2026 = [
-    { name: 'Arrival', description: 'First arrivals and hellos' },
-    { name: 'Family Program', description: 'Program numbers and presentations' },
+    { name: 'Arrival', description: 'First arrivals and hellos', photos: 3 },
+    { name: 'Family Program', description: 'Program numbers and presentations', photos: 2 },
+    { name: 'Group Photos', description: 'Everyone together', photos: 3 },
   ];
-  for (const a of albums2026) {
-    await prisma.reunionAlbum.create({ data: { reunionEventId: reunion2026.id, name: a.name, description: a.description } });
+  for (const [ai, a] of albums2026.entries()) {
+    const album = await prisma.reunionAlbum.create({ data: { reunionEventId: reunion2026.id, name: a.name, description: a.description } });
+    for (let i = 0; i < a.photos; i++) {
+      const img = await saveImage(
+        groupPhotoSvg({ title: `${a.name}`, sub: `2026 Reunion · ${new Date(2026, 11, 27 + i).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` }),
+        {},
+      );
+      const photo = await prisma.photo.create({
+        data: { ...img, caption: `${a.name} — 2026 Reunion`, photoDate: dt(2026, 12, 27), location: 'Cebu City', approvalStatus: PhotoStatus.APPROVED, uploadedById: alain.id },
+      });
+      await prisma.albumPhoto.create({ data: { albumId: album.id, photoId: photo.id, addedById: admin.id } });
+      if (reunion2026.coverPhotoId == null) {
+        await prisma.reunionEvent.update({ where: { id: reunion2026.id }, data: { coverPhotoId: photo.id } });
+      }
+      if (i === 0 && a.name === 'Group Photos') {
+        await prisma.photoTag.createMany({
+          data: [juan.id, maria.id, pedro.id, ana.id, miguel.id].map((memberId) => ({ photoId: photo.id, memberId })),
+        });
+      }
+    }
   }
 
   // One pending photo to demonstrate the approval flow

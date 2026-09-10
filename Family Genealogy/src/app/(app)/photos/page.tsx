@@ -1,9 +1,11 @@
+import Link from 'next/link';
 import { prisma } from '@/lib/db';
 import { getSession } from '@/lib/auth';
 import { getSettings } from '@/lib/settings';
 import { PHOTO_INCLUDE, serializePhoto } from '@/lib/photo-shared';
 import { PhotoGallery } from '@/components/photo-gallery';
 import { UploadButton } from '@/components/upload-button';
+import { Icon } from '@/components/icons';
 import { memberOptions } from '@/lib/members';
 
 export const dynamic = 'force-dynamic';
@@ -39,7 +41,16 @@ export default async function PhotosPage({ searchParams }: { searchParams: { pho
             {approvalRequired ? ' · new uploads are reviewed before publishing' : ''}
           </p>
         </div>
-        <UploadButton members={memberOptions(members)} approvalRequired={approvalRequired} />
+        {session ? (
+          <UploadButton members={memberOptions(members)} approvalRequired={approvalRequired} />
+        ) : (
+          <Link
+            href="/login?next=/photos"
+            className="btn-primary"
+          >
+            <Icon name="camera" className="h-4 w-4" /> Sign in to upload
+          </Link>
+        )}
       </div>
 
       <PhotoGallery
@@ -47,8 +58,10 @@ export default async function PhotosPage({ searchParams }: { searchParams: { pho
         total={total}
         personId={personFilter}
         canDownload={settings.allowPhotoDownload === 'true'}
+        canEdit={!!session}
         members={memberOptions(members)}
         initialPhotoId={searchParams.photo}
+        currentMemberId={session?.memberId}
       />
     </div>
   );

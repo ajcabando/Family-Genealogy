@@ -32,6 +32,7 @@ const PATHS: Record<string, string> = {
   eye: 'M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7zM12 15a3 3 0 100-6 3 3 0 000 6z',
   userPlus: 'M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM19 8v6m-3-3h6',
   menu: 'M3 6h18M3 12h18M3 18h18',
+  book: 'M4 19V5a2 2 0 012-2h8l6 6v10a2 2 0 01-2 2H6a2 2 0 01-2-2zM14 3v6h6M8 13h8M8 17h5',
 };
 
 export function Icon({ name, className }: { name: string; className?: string }) {

@@ -4,6 +4,7 @@ import { prisma } from '@/lib/db';
 import { getSession } from '@/lib/auth';
 import { getSettings } from '@/lib/settings';
 import { Icon } from '@/components/icons';
+import { Collapsible } from '@/components/collapsible';
 import { SuggestModal } from '@/components/suggest-modal';
 import { ChangeProfilePhotoButton } from '@/components/change-profile-photo';
 import { memberOptions } from '@/lib/members';
@@ -106,8 +107,7 @@ export default async function MemberProfilePage({ params, searchParams }: { para
     ) : null;
 
   const RelCard = ({ title, items, empty }: { title: string; items: Array<{ member: { id: string; firstName: string; lastName: string; birthDate?: Date | null; deathDate?: Date | null; profilePhoto?: { thumbPath?: string | null } | null }; kind?: string; status?: string; startDate?: Date | null }>; empty: string }) => (
-    <div className="card p-5">
-      <h3 className="mb-3 font-display text-base font-bold text-ink">{title} <span className="text-sm font-normal text-inkSoft">({items.length})</span></h3>
+    <Collapsible title={title} count={items.length}>
       {items.length === 0 ? (
         <p className="text-sm text-inkSoft">{empty}</p>
       ) : (
@@ -134,7 +134,7 @@ export default async function MemberProfilePage({ params, searchParams }: { para
           ))}
         </ul>
       )}
-    </div>
+    </Collapsible>
   );
 
   const years = yearsRange(member.birthDate, member.deathDate);
@@ -171,7 +171,13 @@ export default async function MemberProfilePage({ params, searchParams }: { para
               </div>
             </div>
             <div className="flex gap-2">
-              <SuggestModal members={memberOptions(allMembers)} defaultMemberId={member.id} open={searchParams.suggest === '1'} />
+              {session ? (
+                <SuggestModal members={memberOptions(allMembers)} defaultMemberId={member.id} open={searchParams.suggest === '1'} />
+              ) : (
+                <Link href={`/login?next=/family/${member.id}?suggest=1`} className="btn-ghost">
+                  <Icon name="edit" className="h-4 w-4" /> Suggest a correction
+                </Link>
+              )}
               {isAdmin && (
                 <Link href={`/admin/members/${member.id}`} className="btn-ghost">
                   <Icon name="edit" className="h-4 w-4" /> Edit
@@ -183,24 +189,22 @@ export default async function MemberProfilePage({ params, searchParams }: { para
       </div>
 
       <div className="grid gap-6 xl:grid-cols-3">
-        <div className="space-y-6 xl:col-span-2">
-          <section className="card p-5">
-            <h3 className="mb-2 font-display text-base font-bold text-ink">Biography</h3>
+        <div className="min-w-0 space-y-6 xl:col-span-2">
+          <Collapsible title="Biography">
             {member.biography ? (
               <p className="whitespace-pre-line text-sm leading-relaxed text-inkSoft">{member.biography}</p>
             ) : (
               <p className="text-sm italic text-inkSoft/70">No biography has been recorded yet.</p>
             )}
-          </section>
+          </Collapsible>
 
           <RelCard title="Parents" items={parents} empty="No parents recorded." />
           <RelCard title="Children" items={children} empty="No children recorded." />
           <RelCard title="Grandchildren" items={grandchildren.map((g) => ({ member: g.relatedPerson }))} empty="No grandchildren recorded." />
 
           {taggedPhotos.length > 0 && (
-            <section className="card p-5">
+            <Collapsible title={`Photos of ${member.firstName}`}>
               <div className="mb-3 flex items-center justify-between">
-                <h3 className="font-display text-base font-bold text-ink">Photos of {member.firstName}</h3>
                 <Link href="/photos" className="text-xs font-semibold text-goldDeep hover:text-gold">All photos</Link>
               </div>
               <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 lg:grid-cols-6">
@@ -210,13 +214,12 @@ export default async function MemberProfilePage({ params, searchParams }: { para
                   </Link>
                 ))}
               </div>
-            </section>
+            </Collapsible>
           )}
         </div>
 
-        <div className="space-y-6">
-          <section className="card p-5">
-            <h3 className="mb-3 font-display text-base font-bold text-ink">Details</h3>
+        <div className="min-w-0 space-y-6">
+          <Collapsible title="Details">
             <dl className="divide-y divide-line/50">
               {member.nickname && <InfoRow label="Nickname" value={member.nickname} />}
               {member.maidenName && <InfoRow label="Maiden name" value={member.maidenName} />}
@@ -229,7 +232,7 @@ export default async function MemberProfilePage({ params, searchParams }: { para
                 <InfoRow label="Privacy" value="This member is living — detailed information is only shown to administrators." />
               )}
             </dl>
-          </section>
+          </Collapsible>
 
           <RelCard title="Spouses" items={spouses} empty="No spouses recorded." />
           <RelCard title="Siblings" items={siblings} empty="No siblings recorded." />

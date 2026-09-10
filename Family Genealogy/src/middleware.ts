@@ -13,6 +13,10 @@ const PUBLIC = [
   '/api/auth/reset',
   '/_next',
   '/favicon.ico',
+  // PWA static assets — must be fetchable before any session exists
+  '/manifest.webmanifest',
+  '/sw.js',
+  '/icons',
 ];
 
 const isPublic = (pathname: string) => PUBLIC.some((p) => pathname === p || pathname.startsWith(`${p}/`));
@@ -33,21 +37,15 @@ export async function middleware(req: NextRequest) {
     }
   }
 
+  // The archive is public to view; only admin management stays gated. Page and
+  // API route handlers additionally enforce their own auth for any mutation.
   const isAdminPath = pathname.startsWith('/admin') || pathname.startsWith('/api/admin');
-  const isApi = pathname.startsWith('/api');
-
-  if (!session || session.status !== 'ACTIVE') {
-    if (isApi) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (isAdminPath && (!session || session.status !== 'ACTIVE' || session.role !== 'ADMIN')) {
+    const isApi = pathname.startsWith('/api');
+    if (isApi) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     const url = req.nextUrl.clone();
     url.pathname = '/login';
     url.searchParams.set('next', pathname);
-    return NextResponse.redirect(url);
-  }
-
-  if (isAdminPath && session.role !== 'ADMIN') {
-    if (isApi) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    const url = req.nextUrl.clone();
-    url.pathname = '/';
     return NextResponse.redirect(url);
   }
 

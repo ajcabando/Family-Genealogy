@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { Icon } from '../icons';
-import { yearsRange, fullName } from '@/lib/utils';
+import { cn, yearsRange, fullName } from '@/lib/utils';
 import type { TreePerson } from '@/lib/genealogy';
 
 export type DrawerRel = { id: string; name: string };
@@ -15,6 +15,8 @@ export function ProfileDrawer({
   siblings,
   onFocus,
   onClose,
+  focusLabel,
+  onFocusToggle,
 }: {
   person: TreePerson;
   parents: DrawerRel[];
@@ -23,6 +25,8 @@ export function ProfileDrawer({
   siblings: DrawerRel[];
   onFocus: (id: string) => void;
   onClose: () => void;
+  focusLabel?: string;
+  onFocusToggle?: () => void;
 }) {
   const years = yearsRange(
     person.birthYear ? new Date(person.birthYear, 0).toISOString() : null,
@@ -38,7 +42,7 @@ export function ProfileDrawer({
             <button
               key={r.id}
               onClick={() => onFocus(r.id)}
-              className="rounded-full border border-line bg-cream px-2.5 py-1 text-xs font-semibold text-inkSoft transition hover:border-gold hover:text-goldDeep"
+              className="min-h-9 rounded-full border border-line bg-cream px-3 py-1.5 text-xs font-semibold text-inkSoft transition hover:border-gold hover:text-goldDeep"
             >
               {r.name}
             </button>
@@ -48,17 +52,21 @@ export function ProfileDrawer({
     ) : null;
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-ink/30 animate-fade-in" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-ink/30 animate-fade-in sm:items-center" onClick={onClose}>
       <aside
-        className="h-full w-full max-w-sm overflow-y-auto border-l border-line/60 bg-white p-6 shadow-lift animate-fade-up"
+        className="max-h-[88dvh] w-full overflow-y-auto rounded-t-3xl border border-line/60 bg-white p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] shadow-lift animate-fade-up sm:max-w-sm sm:rounded-2xl sm:pb-5"
         onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-label={`${person.firstName} ${person.lastName} — profile card`}
       >
+        <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-line sm:hidden" />
+
         <div className="mb-4 flex items-start justify-between">
-          <div>
-            <p className="badge-neutral">{person.deceased ? 'Deceased' : 'Living'}</p>
-            {person.branch && <p className="badge-gold mt-2">{person.branch}</p>}
+          <div className="flex gap-1.5">
+            <span className="badge-neutral">{person.deceased ? 'Deceased' : 'Living'}</span>
+            {person.branch && <span className="badge-gold">{person.branch}</span>}
           </div>
-          <button onClick={onClose} className="rounded-lg p-2 text-inkSoft transition hover:bg-parchment" aria-label="Close">
+          <button onClick={onClose} className="rounded-lg p-2.5 text-inkSoft transition hover:bg-parchment" aria-label="Close">
             <Icon name="x" />
           </button>
         </div>
@@ -95,6 +103,15 @@ export function ProfileDrawer({
         </div>
 
         <div className="mt-6 space-y-2">
+          {onFocusToggle && (
+            <button
+              onClick={onFocusToggle}
+              className={cn('btn w-full', focusLabel?.startsWith('In focus') ? 'btn-gold' : 'btn-ghost')}
+            >
+              <Icon name="tree" className="h-4 w-4" />
+              {focusLabel}
+            </button>
+          )}
           <Link href={`/family/${person.id}`} className="btn-primary w-full">
             View full profile
           </Link>

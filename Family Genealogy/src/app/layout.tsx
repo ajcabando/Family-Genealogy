@@ -1,9 +1,14 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { getSettings } from '@/lib/settings';
+import { PwaRegister } from '@/components/pwa-register';
 
 export const viewport: Viewport = {
   themeColor: '#faf7f1',
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  viewportFit: 'cover',
 };
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -14,13 +19,27 @@ export async function generateMetadata(): Promise<Metadata> {
     return {
       title: `${settings.familyName} Family Archive`,
       description: 'A private digital family heritage archive',
-      icons: { icon: '/favicon.svg' },
+      applicationName: 'Family Archive',
+      manifest: '/manifest.webmanifest',
+      appleWebApp: {
+        capable: true,
+        title: 'Family Archive',
+        statusBarStyle: 'default',
+      },
+      icons: {
+        icon: '/favicon.svg',
+        apple: [{ url: '/icons/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }],
+      },
     };
   } catch {
     return {
       title: 'Family Archive',
       description: 'A private digital family heritage archive',
-      icons: { icon: '/favicon.svg' },
+      manifest: '/manifest.webmanifest',
+      icons: {
+        icon: '/favicon.svg',
+        apple: [{ url: '/icons/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }],
+      },
     };
   }
 }
@@ -28,7 +47,10 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        {children}
+        <PwaRegister />
+      </body>
     </html>
   );
 }

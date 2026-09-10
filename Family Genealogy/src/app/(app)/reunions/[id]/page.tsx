@@ -63,7 +63,13 @@ export default async function ReunionDetailPage({ params, searchParams }: { para
                 {reunion.name} · {formatDate(reunion.date)} · {total} {plural(total, 'photo')}
               </p>
             </div>
-            <EventUploader albums={reunion.albums} members={memberOptions(members)} approvalRequired={approvalRequired} />
+            {session ? (
+              <EventUploader albums={reunion.albums} members={memberOptions(members)} approvalRequired={approvalRequired} />
+            ) : (
+              <Link href="/login" className="btn-primary">
+                <Icon name="camera" className="h-4 w-4" /> Sign in to upload
+              </Link>
+            )}
           </div>
         </div>
         <PhotoGallery
@@ -71,7 +77,9 @@ export default async function ReunionDetailPage({ params, searchParams }: { para
           total={total}
           albumId={album.id}
           canDownload={settings.allowPhotoDownload === 'true'}
+          canEdit={!!session}
           members={memberOptions(members)}
+          currentMemberId={session?.memberId}
         />
       </div>
     );
@@ -103,7 +111,13 @@ export default async function ReunionDetailPage({ params, searchParams }: { para
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="font-display text-xl font-bold text-ink">Albums</h2>
         <div className="flex items-center gap-2">
-          <EventUploader albums={reunion.albums} members={memberOptions(members)} approvalRequired={approvalRequired} />
+          {session ? (
+            <EventUploader albums={reunion.albums} members={memberOptions(members)} approvalRequired={approvalRequired} />
+          ) : (
+            <Link href="/login" className="btn-primary">
+              <Icon name="camera" className="h-4 w-4" /> Sign in to upload
+            </Link>
+          )}
           <NewAlbumModal reunionId={reunion.id} isAdmin={isAdmin} />
         </div>
       </div>      {reunion.albums.length === 0 ? (

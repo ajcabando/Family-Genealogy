@@ -5,7 +5,9 @@ import { apiAuth } from '@/lib/api-helpers';
 import { resolveUploadPath, contentTypeFor } from '@/lib/files';
 
 export async function GET(req: NextRequest, { params }: { params: { path: string[] } }) {
-  const auth = await apiAuth(req);
+  // Public: approved archive photos are viewable by everyone. The download
+  // query string still works; photos themselves are approved-only in galleries.
+  const auth = await apiAuth(req, { publicGet: true });
   if (auth instanceof Response) return auth;
 
   const rel = params.path.join('/');

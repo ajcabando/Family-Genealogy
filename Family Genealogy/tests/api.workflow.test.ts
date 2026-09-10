@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 
-const BASE = process.env.APP_URL || 'http://localhost:3000';
+const BASE = process.env.APP_URL || 'http://localhost:3844';
 const ADMIN = { email: 'admin@family.local', password: 'FamilyAdmin123!' };
 
 async function reachable(): Promise<boolean> {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { Icon } from './icons';
 import { cn, formatDate, formatRelative, plural } from '@/lib/utils';
@@ -8,22 +8,36 @@ import type { GalleryPhoto } from '@/lib/photo-shared';
 
 type MemberOption = { id: string; name: string };
 
+type Comment = {
+  id: string;
+  body: string;
+  authorId: string;
+  authorName: string;
+  createdAt: string;
+};
+
 export function PhotoGallery({
   initialPhotos,
   total,
   albumId,
   personId,
   canDownload,
+  canEdit = true,
   members,
   initialPhotoId,
+  currentMemberId,
 }: {
   initialPhotos: GalleryPhoto[];
   total: number;
   albumId?: string;
   personId?: string;
   canDownload: boolean;
+  /** Whether the viewer is signed in (enables favorites + tagging). */
+  canEdit?: boolean;
   members: MemberOption[];
   initialPhotoId?: string;
+  /** The currently logged-in user's family member ID (for showing delete controls). */
+  currentMemberId?: string | null;
 }) {
   const [photos, setPhotos] = useState(initialPhotos);
   const [page, setPage] = useState(1);
@@ -35,6 +49,81 @@ export function PhotoGallery({
   const [tagOpen, setTagOpen] = useState(false);
   const [tagSel, setTagSel] = useState<Set<string>>(new Set());
   const [busy, setBusy] = useState(false);
+  // Touch navigation + zoom state for the lightbox
+  const [zoom, setZoom] = useState(1);
+  const [zoomPan, setZoomPan] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const touchStart = useRef<{ x: number; y: number; t: number; dist: number } | null>(null);
+  const pinchRef = useRef<{ dist: number; zoom: number } | null>(null);
+  // Comments state
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [commentsLoaded, setCommentsLoaded] = useState(false);
+  const [commentText, setCommentText] = useState('');
+  const [commentBusy, setCommentBusy] = useState(false);
+  const commentInputRef = useRef<HTMLTextAreaElement>(null);
+
+  const resetZoom = () => {
+    setZoom(1);
+    setZoomPan({ x: 0, y: 0 });
+  };
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length === 2) {
+      const d = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+      pinchRef.current = { dist: d, zoom };
+      return;
+    }
+    const t = e.touches[0];
+    touchStart.current = { x: t.clientX, y: t.clientY, t: Date.now(), dist: 0 };
+  };
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    if (e.touches.length === 2 && pinchRef.current) {
+      const d = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+      const next = Math.min(4, Math.max(1, pinchRef.current.zoom * (d / pinchRef.current.dist)));
+      setZoom(next);
+      if (next === 1) setZoomPan({ x: 0, y: 0 });
+    }
+  };
+
+  const onTouchEnd = (e: React.TouchEvent) => {
+    if (e.changedTouches.length === 2 || pinchRef.current) {
+      pinchRef.current = null;
+      touchStart.current = null;
+      return;
+    }
+    const start = touchStart.current;
+    touchStart.current = null;
+    if (!start) return;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - start.x;
+    const dy = t.clientY - start.y;
+    const dt = Date.now() - start.t;
+    // Double-tap toggles zoom when the image is not being pinched.
+    if (Math.hypot(dx, dy) < 12 && dt < 300) {
+      setZoom((z) => {
+        if (z > 1) {
+          setZoomPan({ x: 0, y: 0 });
+          return 1;
+        }
+        return 2.5;
+      });
+      return;
+    }
+    // Swipe left/right navigates only when zoomed out.
+    if (zoom === 1 && Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5 && dt < 600) {
+      step(dx < 0 ? 1 : -1);
+    }
+  };
+
+  const onImageDoubleClick = () => {
+    setZoom((z) => {
+      if (z > 1) {
+        setZoomPan({ x: 0, y: 0 });
+        return 1;
+      }
+      return 2.5;
+    });
+  };
 
   const openPhoto = openIndex !== null ? photos[openIndex] : null;
 
@@ -75,6 +164,31 @@ export function PhotoGallery({
     return () => window.removeEventListener('keydown', onKey);
   }, [openIndex, step]);
 
+  // Reset zoom and load comments whenever the open photo changes.
+  useEffect(() => {
+    resetZoom();
+    setTagOpen(false);
+    setCommentText('');
+    setCommentsLoaded(false);
+    setComments([]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openIndex]);
+
+  // Load comments when a photo is opened
+  useEffect(() => {
+    if (openIndex === null || commentsLoaded) return;
+    const photo = photos[openIndex];
+    if (!photo) return;
+
+    fetch(`/api/photos/${photo.id}/comments`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.comments) setComments(data.comments);
+        setCommentsLoaded(true);
+      })
+      .catch(() => setCommentsLoaded(true));
+  }, [openIndex, commentsLoaded, photos]);
+
   async function toggleFavorite() {
     if (!openPhoto || busy) return;
     setBusy(true);
@@ -98,6 +212,47 @@ export function PhotoGallery({
       setPhotos((prev) => prev.map((p) => (p.id === openPhoto.id ? { ...p, tags: data.tags } : p)));
       setTagSel(new Set());
       setTagOpen(false);
+    }
+    setBusy(false);
+  }
+
+  async function removeTag(memberId: string) {
+    if (!openPhoto || busy) return;
+    setBusy(true);
+    const res = await fetch(`/api/photos/${openPhoto.id}/tags`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ memberId }),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      setPhotos((prev) => prev.map((p) => (p.id === openPhoto.id ? { ...p, tags: data.tags } : p)));
+    }
+    setBusy(false);
+  }
+
+  async function postComment() {
+    if (!openPhoto || !commentText.trim() || commentBusy) return;
+    setCommentBusy(true);
+    const res = await fetch(`/api/photos/${openPhoto.id}/comments`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ body: commentText.trim() }),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      setComments((prev) => [...prev, data.comment]);
+      setCommentText('');
+    }
+    setCommentBusy(false);
+  }
+
+  async function deleteComment(commentId: string) {
+    if (!openPhoto || busy) return;
+    setBusy(true);
+    const res = await fetch(`/api/photos/${openPhoto.id}/comments/${commentId}`, { method: 'DELETE' });
+    if (res.ok) {
+      setComments((prev) => prev.filter((c) => c.id !== commentId));
     }
     setBusy(false);
   }
@@ -128,6 +283,7 @@ export function PhotoGallery({
                 <p className="mt-1 flex items-center gap-2 text-[11px] text-white/80">
                   {p.photoDate && <span>{formatDate(p.photoDate)}</span>}
                   {p.tags.length > 0 && <span>{plural(p.tags.length, 'person')} tagged</span>}
+                  {p.comments.length > 0 && <span>{plural(p.comments.length, 'comment')}</span>}
                 </p>
               </div>
               {p.favorite && (
@@ -166,12 +322,16 @@ export function PhotoGallery({
                   <Icon name="download" />
                 </a>
               )}
-              <button onClick={toggleFavorite} className="rounded-lg p-2.5 transition hover:bg-white/10" title="Favorite">
-                <Icon name="heart" className={cn('h-5 w-5', openPhoto.favorite && 'fill-gold text-gold')} />
-              </button>
-              <button onClick={() => setTagOpen((o) => !o)} className="rounded-lg p-2.5 text-white/80 transition hover:bg-white/10" title="Tag people">
-                <Icon name="userPlus" />
-              </button>
+              {canEdit && (
+                <>
+                  <button onClick={toggleFavorite} className="rounded-lg p-2.5 transition hover:bg-white/10" title="Favorite">
+                    <Icon name="heart" className={cn('h-5 w-5', openPhoto.favorite && 'fill-gold text-gold')} />
+                  </button>
+                  <button onClick={() => setTagOpen((o) => !o)} className="rounded-lg p-2.5 text-white/80 transition hover:bg-white/10" title="Tag people">
+                    <Icon name="userPlus" />
+                  </button>
+                </>
+              )}
               <button onClick={() => setOpenIndex(null)} className="rounded-lg p-2.5 text-white/80 transition hover:bg-white/10" title="Close">
                 <Icon name="x" />
               </button>
@@ -180,8 +340,13 @@ export function PhotoGallery({
 
           {/* image + side info */}
           <div className="flex min-h-0 flex-1 flex-col lg:flex-row" onClick={(e) => e.stopPropagation()}>
-            <div className="relative flex min-h-0 flex-1 items-center justify-center px-4 sm:px-16">
-              {openIndex !== null && openIndex > 0 && (
+            <div
+              className="relative flex min-h-0 touch-pan-y flex-1 items-center justify-center overflow-hidden px-4 sm:px-16"
+              onTouchStart={onTouchStart}
+              onTouchMove={onTouchMove}
+              onTouchEnd={onTouchEnd}
+            >
+              {openIndex !== null && openIndex > 0 && zoom === 1 && (
                 <button
                   onClick={() => step(-1)}
                   className="absolute left-2 top-1/2 z-10 -translate-y-1/2 rounded-full bg-white/10 p-2.5 text-white transition hover:bg-white/25 sm:left-4"
@@ -193,15 +358,33 @@ export function PhotoGallery({
               <img
                 src={`/api/files/${openPhoto.optimizedPath}`}
                 alt={openPhoto.caption || 'Family photo'}
-                className="max-h-full max-w-full rounded-xl object-contain shadow-lift"
+                onClick={onImageDoubleClick}
+                onDoubleClick={onImageDoubleClick}
+                style={{
+                  transform: zoom > 1 ? `scale(${zoom}) translate(${zoomPan.x}px, ${zoomPan.y}px)` : undefined,
+                  transition: 'transform 150ms ease-out',
+                  cursor: zoom > 1 ? 'zoom-out' : 'zoom-in',
+                }}
+                className="max-h-full max-w-full select-none rounded-xl object-contain shadow-lift"
               />
-              {openIndex !== null && openIndex < photos.length - 1 && (
+              {openIndex !== null && openIndex < photos.length - 1 && zoom === 1 && (
                 <button
                   onClick={() => step(1)}
                   className="absolute right-2 top-1/2 z-10 -translate-y-1/2 rounded-full bg-white/10 p-2.5 text-white transition hover:bg-white/25 sm:right-4"
                   title="Next"
                 >
                   <Icon name="chevronRight" />
+                </button>
+              )}
+              {zoom > 1 && (
+                <button
+                  onClick={() => {
+                    setZoom(1);
+                    setZoomPan({ x: 0, y: 0 });
+                  }}
+                  className="absolute bottom-4 left-1/2 z-10 -translate-x-1/2 rounded-full bg-white/15 px-4 py-2 text-xs font-bold text-white backdrop-blur transition hover:bg-white/30"
+                >
+                  Reset zoom
                 </button>
               )}
             </div>
@@ -228,6 +411,7 @@ export function PhotoGallery({
                 </div>
               </dl>
 
+              {/* ---- Tags ---- */}
               <div className="mt-4">
                 <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-white/50">Tagged</p>
                 {openPhoto.tags.length === 0 ? (
@@ -235,19 +419,30 @@ export function PhotoGallery({
                 ) : (
                   <div className="flex flex-wrap gap-1.5">
                     {openPhoto.tags.map((t) => (
-                      <Link
-                        key={t.id}
-                        href={`/family/${t.memberId}`}
-                        onClick={() => setOpenIndex(null)}
-                        className="rounded-full bg-white/10 px-2.5 py-1 text-xs font-semibold text-white transition hover:bg-gold hover:text-ink"
-                      >
-                        {t.name}
-                      </Link>
+                      <span key={t.id} className="group/tag inline-flex items-center gap-1 rounded-full bg-white/10 px-2.5 py-1 text-xs font-semibold text-white transition hover:bg-gold hover:text-ink">
+                        <Link
+                          href={`/family/${t.memberId}`}
+                          onClick={() => setOpenIndex(null)}
+                          className="hover:underline"
+                        >
+                          {t.name}
+                        </Link>
+                        {canEdit && (
+                          <button
+                            onClick={() => removeTag(t.memberId)}
+                            className="ml-0.5 hidden h-3.5 w-3.5 items-center justify-center rounded-full transition hover:bg-white/20 group-hover/tag:inline-flex"
+                            title={`Remove ${t.name}`}
+                          >
+                            <Icon name="x" className="h-2.5 w-2.5" />
+                          </button>
+                        )}
+                      </span>
                     ))}
                   </div>
                 )}
               </div>
 
+              {/* ---- Tag picker ---- */}
               {tagOpen && (
                 <div className="mt-4 rounded-xl border border-white/15 bg-white/5 p-3">
                   <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-white/50">Tag family members</p>
@@ -275,6 +470,73 @@ export function PhotoGallery({
                   </button>
                 </div>
               )}
+
+              {/* ---- Comments ---- */}
+              <div className="mt-5 border-t border-white/10 pt-4">
+                <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-white/50">
+                  Comments {comments.length > 0 && <span className="text-white/40">({comments.length})</span>}
+                </p>
+
+                {comments.length === 0 ? (
+                  <p className="text-sm text-white/40">No comments yet.</p>
+                ) : (
+                  <div className="space-y-3">
+                    {comments.map((c) => (
+                      <div key={c.id} className="group/comment rounded-lg bg-white/5 p-3">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-semibold text-white">{c.authorName}</p>
+                            <p className="mt-1 text-sm text-white/70 whitespace-pre-wrap break-words">{c.body}</p>
+                          </div>
+                          {canEdit && (c.authorId === currentMemberId) && (
+                            <button
+                              onClick={() => deleteComment(c.id)}
+                              className="hidden shrink-0 rounded p-1 text-white/30 transition hover:bg-white/10 hover:text-white/70 group-hover/comment:inline-flex"
+                              title="Delete comment"
+                            >
+                              <Icon name="trash" className="h-3.5 w-3.5" />
+                            </button>
+                          )}
+                        </div>
+                        <p className="mt-1.5 text-[11px] text-white/30">{formatRelative(c.createdAt)}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {canEdit ? (
+                  <div className="mt-3">
+                    <textarea
+                      ref={commentInputRef}
+                      value={commentText}
+                      onChange={(e) => setCommentText(e.target.value)}
+                      placeholder="Add a comment…"
+                      rows={2}
+                      className="w-full resize-none rounded-xl border border-white/15 bg-white/5 px-3 py-2.5 text-sm text-white placeholder:text-white/30 outline-none transition focus:border-gold/50 focus:ring-1 focus:ring-gold/30"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+                          e.preventDefault();
+                          postComment();
+                        }
+                      }}
+                    />
+                    <div className="mt-2 flex items-center justify-between">
+                      <p className="text-[11px] text-white/30">{commentText.length}/2000</p>
+                      <button
+                        onClick={postComment}
+                        disabled={!commentText.trim() || commentBusy || commentText.length > 2000}
+                        className="btn-gold px-3 py-1.5 text-xs"
+                      >
+                        {commentBusy ? 'Posting…' : 'Post'}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="mt-3 text-xs text-white/40">
+                    <Link href="/login" className="underline transition hover:text-gold">Sign in</Link> to add a comment.
+                  </p>
+                )}
+              </div>
             </aside>
           </div>
         </div>

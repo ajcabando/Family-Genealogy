@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
     data: { userId: user.id, tokenHash, expiresAt: new Date(Date.now() + 60 * 60 * 1000) },
   });
 
-  const appUrl = process.env.APP_URL || 'http://localhost:3000';
+  const appUrl = process.env.APP_URL || 'http://localhost:3844';
   const resetLink = `${appUrl}/reset?token=${token}`;
   // MVP has no email provider configured — the reset link is returned to the client.
   return Response.json({ message: 'Reset link generated.', resetLink });

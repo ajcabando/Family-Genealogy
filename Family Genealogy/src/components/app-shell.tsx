@@ -22,21 +22,46 @@ const NAV = [
   { href: '/timeline', label: 'Timeline', icon: 'clock' },
   { href: '/profile', label: 'My Profile', icon: 'user' },
   { href: '/contributions', label: 'Contributions', icon: 'inbox' },
+  { href: '/notifications', label: 'Notifications', icon: 'bell' },
+  { href: '/guide', label: 'Guide', icon: 'book' },
 ];
 
-export function AppShell({ session, familyName, children }: { session: Session; familyName: string; children: React.ReactNode }) {
+// Bottom navigation on phones: Tree | Family | Photos | Reunions | More
+const MOBILE_TABS = [
+  { href: '/tree', label: 'Tree', icon: 'tree' },
+  { href: '/family', label: 'Family', icon: 'users' },
+  { href: '/photos', label: 'Photos', icon: 'photo' },
+  { href: '/reunions', label: 'Reunions', icon: 'calendar' },
+];
+
+function isActive(pathname: string, href: string) {
+  return pathname === href || (href !== '/' && pathname.startsWith(href));
+}
+
+export function AppShell({ session, familyName, children }: { session: Session | null; familyName: string; children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const isAdmin = session.role === 'ADMIN';
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const isAdmin = session?.role === 'ADMIN';
+  const [moreOpen, setMoreOpen] = useState(false);
 
-  const items = [...NAV, ...(isAdmin ? [{ href: '/admin', label: 'Admin', icon: 'shield' as string }] : [])];
+  const moreItems = [
+    { href: '/', label: 'Dashboard', icon: 'home' },
+    { href: '/timeline', label: 'Timeline', icon: 'clock' },
+    { href: '/profile', label: 'My Profile', icon: 'user' },
+    { href: '/contributions', label: 'Contributions', icon: 'inbox' },
+    { href: '/notifications', label: 'Notifications', icon: 'bell' },
+    { href: '/guide', label: 'Guide', icon: 'book' },
+    ...(isAdmin ? [{ href: '/admin', label: 'Admin', icon: 'shield' as string }] : []),
+  ];
 
   async function signOut() {
     await fetch('/api/auth/logout', { method: 'POST' });
     router.push('/login');
     router.refresh();
   }
+
+  const initial = (session?.name || session?.email || '?').slice(0, 1).toUpperCase();
+  const displayName = session?.name || session?.email || 'Guest';
 
   return (
     <div className="min-h-screen">
@@ -52,8 +77,8 @@ export function AppShell({ session, familyName, children }: { session: Session; 
           </div>
         </Link>
         <nav className="flex-1 space-y-0.5 overflow-y-auto px-3 py-2">
-          {items.map((item) => {
-            const active = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
+          {NAV.map((item) => {
+            const active = isActive(pathname, item.href);
             return (
               <Link
                 key={item.href}
@@ -68,62 +93,169 @@ export function AppShell({ session, familyName, children }: { session: Session; 
               </Link>
             );
           })}
+          {isAdmin && (
+            <Link
+              href="/admin"
+              className={cn(
+                'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition',
+                isActive(pathname, '/admin') ? 'bg-goldDeep text-white shadow-card' : 'text-inkSoft hover:bg-parchment hover:text-goldDeep',
+              )}
+            >
+              <Icon name="shield" className="h-[18px] w-[18px]" />
+              Admin
+            </Link>
+          )}
         </nav>
         <div className="border-t border-line/60 p-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gold/20 font-display text-sm font-bold text-goldDeep">
-              {(session.name || session.email || '?').slice(0, 1).toUpperCase()}
+          {session ? (
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gold/20 font-display text-sm font-bold text-goldDeep">{initial}</div>
+              <div className="min-w-0 flex-1 leading-tight">
+                <p className="truncate text-sm font-semibold">{displayName}</p>
+                <p className="text-[11px] text-inkSoft/70">{isAdmin ? 'Administrator' : 'Family Member'}</p>
+              </div>
+              <button onClick={signOut} title="Sign out" className="text-inkSoft transition hover:text-rust">
+                <Icon name="x" className="h-4 w-4 rotate-45" />
+              </button>
             </div>
-            <div className="min-w-0 flex-1 leading-tight">
-              <p className="truncate text-sm font-semibold">{session.name || session.email}</p>
-              <p className="text-[11px] text-inkSoft/70">{isAdmin ? 'Administrator' : 'Family Member'}</p>
+          ) : (
+            <div className="space-y-2">
+              <p className="text-xs text-inkSoft/80">Viewing as guest — sign in to contribute to the archive.</p>
+              <div className="flex gap-2">
+                <Link href="/login" className="btn-gold flex-1 px-3 text-xs">Sign in</Link>
+                <Link href="/register" className="btn-ghost flex-1 px-3 text-xs">Request access</Link>
+              </div>
             </div>
-            <button onClick={signOut} title="Sign out" className="text-inkSoft transition hover:text-rust">
-              <Icon name="x" className="h-4 w-4 rotate-45" />
-            </button>
-          </div>
+          )}
         </div>
       </aside>
 
-      {/* ---------- Mobile top bar ---------- */}
-      <header className="sticky top-0 z-40 flex items-center justify-between border-b border-line/60 bg-white/80 px-4 py-3 backdrop-blur lg:hidden">
-        <Link href="/" className="flex items-center gap-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-goldDeep text-white">
+      {/* ---------- Compact mobile header ---------- */}
+      <header className="sticky top-0 z-40 flex h-14 items-center justify-between border-b border-line/60 bg-white/80 px-3 backdrop-blur lg:hidden">
+        <Link href="/" className="flex min-w-0 items-center gap-2">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-goldDeep text-white">
             <Icon name="tree" className="h-5 w-5" />
           </div>
-          <span className="font-display text-base font-bold">{familyName}</span>
+          <span className="truncate font-display text-[15px] font-bold">{familyName}</span>
         </Link>
-        <div className="flex items-center gap-1">
-          <NotificationsBell />
-          <button onClick={() => setMobileOpen((o) => !o)} className="flex h-10 w-10 items-center justify-center rounded-xl text-inkSoft hover:bg-parchment">
-            <Icon name={mobileOpen ? 'x' : 'menu'} />
-          </button>
+        <div className="flex shrink-0 items-center gap-0.5">
+          <Link
+            href="/family"
+            className="flex h-10 w-10 items-center justify-center rounded-xl text-inkSoft transition hover:bg-parchment hover:text-goldDeep"
+            aria-label="Search family"
+          >
+            <Icon name="search" />
+          </Link>
+          {session ? (
+            <>
+              <NotificationsBell />
+              <Link
+                href="/profile"
+                className="ml-0.5 flex h-9 w-9 items-center justify-center rounded-full border border-line bg-gold/15 font-display text-sm font-bold text-goldDeep"
+                aria-label="My profile"
+              >
+                {initial}
+              </Link>
+            </>
+          ) : (
+            <Link href="/login" className="btn-gold ml-1 px-3.5 py-2 text-xs">
+              Sign in
+            </Link>
+          )}
         </div>
       </header>
 
-      {mobileOpen && (
-        <div className="fixed inset-0 z-50 bg-ink/40 lg:hidden animate-fade-in" onClick={() => setMobileOpen(false)}>
+      {/* ---------- Desktop top bar ---------- */}
+      <div className="fixed right-0 top-0 z-30 hidden h-16 w-[calc(100%-15rem)] items-center justify-end gap-2 border-b border-line/60 bg-cream/80 px-6 backdrop-blur lg:flex">
+        {session ? (
+          <>
+            <Link
+              href="/family"
+              className="flex h-10 w-10 items-center justify-center rounded-xl text-inkSoft transition hover:bg-parchment hover:text-goldDeep"
+              title="Search family"
+            >
+              <Icon name="search" />
+            </Link>
+            <NotificationsBell />
+            <Link href="/contributions" className="flex h-10 w-10 items-center justify-center rounded-xl text-inkSoft transition hover:bg-parchment hover:text-goldDeep" title="My contributions">
+              <Icon name="inbox" />
+            </Link>
+          </>
+        ) : (
+          <div className="flex items-center gap-2">
+            <Link href="/register" className="btn-ghost px-3 text-xs">Request access</Link>
+            <Link href="/login" className="btn-gold px-4 text-xs">Sign in</Link>
+          </div>
+        )}
+      </div>
+
+      {/* ---------- Content (rendered once, shared by all breakpoints) ---------- */}
+      <div className="lg:pl-60 lg:pt-16">
+        <main className="px-4 pb-24 pt-4 sm:px-6 lg:px-8 lg:pb-6 lg:pt-6">{children}</main>
+      </div>
+
+      {/* ---------- Mobile bottom nav: Tree | Family | Photos | Reunions | More ---------- */}
+      <nav
+        className="fixed inset-x-0 bottom-0 z-40 flex border-t border-line/60 bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden"
+        aria-label="Primary"
+      >
+        {MOBILE_TABS.map((item) => {
+          const active = isActive(pathname, item.href);
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={cn(
+                'flex flex-1 flex-col items-center gap-0.5 py-2 text-[10px] font-semibold transition',
+                active ? 'text-goldDeep' : 'text-inkSoft',
+              )}
+            >
+              <span className={cn('flex h-7 w-12 items-center justify-center rounded-full', active && 'bg-gold/15')}>
+                <Icon name={item.icon} className="h-5 w-5" />
+              </span>
+              {item.label}
+            </Link>
+          );
+        })}
+        <button
+          onClick={() => setMoreOpen(true)}
+          className={cn(
+            'flex flex-1 flex-col items-center gap-0.5 py-2 text-[10px] font-semibold transition',
+            moreItems.some((m) => isActive(pathname, m.href)) ? 'text-goldDeep' : 'text-inkSoft',
+          )}
+        >
+          <span className="flex h-7 w-12 items-center justify-center rounded-full">
+            <Icon name="menu" className="h-5 w-5" />
+          </span>
+          More
+        </button>
+      </nav>
+
+      {/* ---------- More bottom sheet ---------- */}
+      {moreOpen && (
+        <div className="fixed inset-0 z-50 bg-ink/40 animate-fade-in lg:hidden" onClick={() => setMoreOpen(false)}>
           <div
-            className="absolute right-0 top-0 h-full w-72 overflow-y-auto bg-cream p-4 shadow-lift animate-fade-up"
+            className="absolute inset-x-0 bottom-0 max-h-[80dvh] overflow-y-auto rounded-t-3xl bg-cream p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-lift animate-fade-up"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="mb-3 flex items-center justify-between px-2">
-              <span className="font-display text-lg font-bold">{session.name || session.email}</span>
-              <button onClick={() => setMobileOpen(false)} className="rounded-lg p-2 text-inkSoft hover:bg-parchment">
+            <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-line" />
+            <div className="mb-3 flex items-center justify-between px-1">
+              <span className="font-display text-base font-bold">{displayName}</span>
+              <button onClick={() => setMoreOpen(false)} className="rounded-lg p-2 text-inkSoft hover:bg-parchment" aria-label="Close menu">
                 <Icon name="x" />
               </button>
             </div>
-            <nav className="space-y-0.5">
-              {items.map((item) => {
-                const active = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
+            <nav className="grid grid-cols-2 gap-2">
+              {moreItems.map((item) => {
+                const active = isActive(pathname, item.href);
                 return (
                   <Link
                     key={item.href}
                     href={item.href}
-                    onClick={() => setMobileOpen(false)}
+                    onClick={() => setMoreOpen(false)}
                     className={cn(
-                      'flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold transition',
-                      active ? 'bg-goldDeep text-white' : 'text-inkSoft hover:bg-parchment',
+                      'flex items-center gap-3 rounded-xl px-3.5 py-3.5 text-sm font-semibold transition',
+                      active ? 'bg-goldDeep text-white' : 'bg-white text-inkSoft shadow-card hover:text-goldDeep',
                     )}
                   >
                     <Icon name={item.icon} className="h-[18px] w-[18px]" />
@@ -131,48 +263,28 @@ export function AppShell({ session, familyName, children }: { session: Session; 
                   </Link>
                 );
               })}
-              <button onClick={signOut} className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-rust hover:bg-rust/10">
-                <Icon name="x" className="h-[18px] w-[18px] rotate-45" />
-                Sign out
-              </button>
+              {session ? (
+                <button
+                  onClick={signOut}
+                  className="flex items-center gap-3 rounded-xl bg-rust/10 px-3.5 py-3.5 text-sm font-semibold text-rust transition hover:bg-rust/20"
+                >
+                  <Icon name="x" className="h-[18px] w-[18px] rotate-45" />
+                  Sign out
+                </button>
+              ) : (
+                <Link
+                  href="/login"
+                  onClick={() => setMoreOpen(false)}
+                  className="flex items-center gap-3 rounded-xl bg-goldDeep px-3.5 py-3.5 text-sm font-semibold text-white shadow-card"
+                >
+                  <Icon name="user" className="h-[18px] w-[18px]" />
+                  Sign in
+                </Link>
+              )}
             </nav>
           </div>
         </div>
       )}
-
-      {/* ---------- Desktop top bar ---------- */}
-      <div className="fixed right-0 top-0 z-30 hidden h-16 w-[calc(100%-15rem)] items-center justify-end gap-2 border-b border-line/60 bg-cream/80 px-6 backdrop-blur lg:flex">
-        <NotificationsBell />
-        <Link href="/contributions" className="flex h-10 w-10 items-center justify-center rounded-xl text-inkSoft transition hover:bg-parchment hover:text-goldDeep" title="My contributions">
-          <Icon name="inbox" />
-        </Link>
-      </div>
-
-      {/* ---------- Content (rendered once, shared by all breakpoints) ---------- */}
-      <div className="lg:pl-60 lg:pt-16">
-        <main className="px-4 py-5 pb-24 lg:px-8 lg:py-6 lg:pb-6">{children}</main>
-      </div>
-
-      {/* ---------- Mobile bottom nav ---------- */}
-      <nav className="fixed inset-x-0 bottom-0 z-40 flex border-t border-line/60 bg-white/90 backdrop-blur lg:hidden">
-        {items.slice(0, 5).map((item) => {
-          const active = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                'flex flex-1 flex-col items-center gap-0.5 py-2.5 text-[10px] font-semibold transition',
-                active ? 'text-goldDeep' : 'text-inkSoft',
-              )}
-            >
-              <Icon name={item.icon} className="h-5 w-5" />
-              {item.label.split(' ')[0]}
-            </Link>
-          );
-        })}
-      </nav>
     </div>
   );
 }
-

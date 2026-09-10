@@ -4,7 +4,8 @@ import { apiAuth } from '@/lib/api-helpers';
 import { audit } from '@/lib/audit';
 
 export async function GET(req: NextRequest) {
-  const auth = await apiAuth(req);
+  // Public: reunion listings are viewable by everyone.
+  const auth = await apiAuth(req, { publicGet: true });
   if (auth instanceof Response) return auth;
 
   const events = await prisma.reunionEvent.findMany({

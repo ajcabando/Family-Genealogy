@@ -97,7 +97,7 @@ export default async function DashboardPage() {
 
       <div className="grid gap-6 xl:grid-cols-3">
         {/* Left column */}
-        <div className="space-y-6 xl:col-span-2">
+        <div className="min-w-0 space-y-6 xl:col-span-2">
           <section className="card p-5">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="font-display text-lg font-bold text-ink">Recently added family members</h2>
@@ -130,9 +130,14 @@ export default async function DashboardPage() {
               <h2 className="font-display text-lg font-bold text-ink">Recently uploaded photos</h2>
               <Link href="/photos" className="text-xs font-semibold text-goldDeep hover:text-gold">Open gallery</Link>
             </div>
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            {/* Horizontal scroller on mobile, grid on larger screens */}
+            <div className="flex snap-x snap-mandatory gap-2 overflow-x-auto pb-1 sm:grid sm:grid-cols-4 sm:overflow-visible sm:pb-0">
               {recentPhotos.map((p) => (
-                <Link key={p.id} href={`/photos?photo=${p.id}`} className="group relative aspect-square overflow-hidden rounded-xl border border-line/60">
+                <Link
+                  key={p.id}
+                  href={`/photos?photo=${p.id}`}
+                  className="group relative aspect-square w-28 shrink-0 snap-start overflow-hidden rounded-xl border border-line/60 sm:w-auto"
+                >
                   <img
                     src={photoUrl(p, 'full')}
                     alt={p.caption || 'Family photo'}

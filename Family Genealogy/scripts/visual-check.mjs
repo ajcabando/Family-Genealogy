@@ -1,9 +1,9 @@
-// Visual & DOM health check against a running instance (default http://localhost:3000).
+// Visual & DOM health check against a running instance (default http://localhost:3844).
 // Usage: node scripts/visual-check.mjs [baseUrl]
 import { chromium } from 'playwright-core';
 import fs from 'node:fs';
 
-const BASE = process.argv[2] || 'http://localhost:3000';
+const BASE = process.argv[2] || 'http://localhost:3844';
 const OUT = '/tmp/family-visual';
 fs.mkdirSync(OUT, { recursive: true });
 

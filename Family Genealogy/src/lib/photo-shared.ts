@@ -1,4 +1,4 @@
-import type { Photo, PhotoTag, FamilyMember } from '@prisma/client';
+import type { Photo, PhotoTag, PhotoComment, FamilyMember } from '@prisma/client';
 
 export type GalleryPhoto = {
   id: string;
@@ -12,12 +12,14 @@ export type GalleryPhoto = {
   optimizedPath: string;
   uploaderName: string | null;
   tags: Array<{ id: string; memberId: string; name: string }>;
+  comments: Array<{ id: string; body: string; authorId: string; authorName: string; createdAt: string }>;
   createdAt: string;
   approvalStatus: string;
 };
 
 type PhotoWithRels = Photo & {
   tags?: Array<PhotoTag & { member: Pick<FamilyMember, 'id' | 'firstName' | 'lastName'> }>;
+  comments?: Array<PhotoComment & { author: Pick<FamilyMember, 'id' | 'firstName' | 'lastName'> }>;
   uploader?: Pick<FamilyMember, 'id' | 'firstName' | 'lastName'> | null;
 };
 
@@ -38,6 +40,13 @@ export function serializePhoto(p: PhotoWithRels): GalleryPhoto {
       memberId: t.memberId,
       name: `${t.member.firstName} ${t.member.lastName}`,
     })),
+    comments: (p.comments || []).map((c) => ({
+      id: c.id,
+      body: c.body,
+      authorId: c.authorId,
+      authorName: `${c.author.firstName} ${c.author.lastName}`,
+      createdAt: c.createdAt.toISOString(),
+    })),
     createdAt: p.createdAt.toISOString(),
     approvalStatus: p.approvalStatus,
   };
@@ -45,5 +54,6 @@ export function serializePhoto(p: PhotoWithRels): GalleryPhoto {
 
 export const PHOTO_INCLUDE = {
   tags: { include: { member: { select: { id: true, firstName: true, lastName: true } } } },
+  comments: { include: { author: { select: { id: true, firstName: true, lastName: true } } } },
   uploader: { select: { id: true, firstName: true, lastName: true } },
 } as const;

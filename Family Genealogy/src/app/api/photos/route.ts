@@ -8,7 +8,9 @@ import { storeImage } from '@/lib/files';
 import { PHOTO_INCLUDE, serializePhoto } from '@/lib/photo-shared';
 
 export async function GET(req: NextRequest) {
-  const auth = await apiAuth(req);
+  // The photo archive is public — only approved photos are listed for anonymous
+  // visitors. Pending/private scopes still require a session (admin for 'all').
+  const auth = await apiAuth(req, { publicGet: true });
   if (auth instanceof Response) return auth;
 
   const { searchParams } = new URL(req.url);
@@ -17,11 +19,12 @@ export async function GET(req: NextRequest) {
   const albumId = searchParams.get('albumId') || undefined;
   const personId = searchParams.get('personId') || undefined;
   const scope = searchParams.get('scope') || 'approved';
-  const isAdmin = auth.user.role === 'ADMIN';
+  const isAdmin = auth.user?.role === 'ADMIN';
+  const memberId = auth.user?.memberId || null;
 
   let approvalStatus: string | undefined;
   if (scope === 'pending') {
-    if (!isAdmin && !auth.user.memberId) return Response.json({ photos: [], total: 0, hasMore: false });
+    if (!isAdmin && !memberId) return Response.json({ photos: [], total: 0, hasMore: false });
     approvalStatus = 'PENDING';
   } else if (scope === 'all') {
     if (!isAdmin) return Response.json({ error: 'Forbidden' }, { status: 403 });
@@ -32,7 +35,7 @@ export async function GET(req: NextRequest) {
   const where: Record<string, unknown> = { deletedAt: null, ...(approvalStatus ? { approvalStatus } : {}) };
   if (albumId) where.albums = { some: { albumId } };
   if (personId) where.tags = { some: { memberId: personId } };
-  if (scope === 'pending' && !isAdmin) where.uploadedById = auth.user.memberId;
+  if (scope === 'pending' && !isAdmin) where.uploadedById = memberId;
 
   const [photos, total] = await Promise.all([
     prisma.photo.findMany({ where, include: PHOTO_INCLUDE, orderBy: { createdAt: 'desc' }, skip: (page - 1) * limit, take: limit }),

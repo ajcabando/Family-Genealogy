@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/db';
 import { getSession } from '@/lib/auth';
 import { Icon } from '@/components/icons';
-import { formatDate, formatRelative, photoUrl, plural } from '@/lib/utils';
+import { cn, formatDate, formatRelative, photoUrl, plural } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,9 +20,20 @@ const STATUS_BADGE: Record<string, string> = {
   NEEDS_INFO: 'badge-neutral',
 };
 
-export default async function ContributionsPage() {
+const TABS = ['pending', 'approved', 'rejected'] as const;
+type Tab = (typeof TABS)[number];
+
+const TAB_LABEL: Record<Tab, string> = {
+  pending: 'Pending',
+  approved: 'Approved',
+  rejected: 'Rejected',
+};
+
+export default async function ContributionsPage({ searchParams }: { searchParams: { tab?: string } }) {
   const session = await getSession();
   if (!session) redirect('/login');
+
+  const tab: Tab = TABS.includes(searchParams.tab as Tab) ? (searchParams.tab as Tab) : 'pending';
 
   const [requests, photos] = await Promise.all([
     prisma.changeRequest.findMany({
@@ -41,9 +52,27 @@ export default async function ContributionsPage() {
       : Promise.resolve([]),
   ]);
 
+  const statusOf = (r: { status: string }) => (r.status === 'PENDING' ? 'pending' : r.status === 'APPROVED' ? 'approved' : 'rejected');
   const pendingPhotos = photos.filter((p) => p.approvalStatus === 'PENDING');
   const approvedPhotos = photos.filter((p) => p.approvalStatus === 'APPROVED');
   const rejectedPhotos = photos.filter((p) => p.approvalStatus === 'REJECTED');
+  const photoCounts: Record<Tab, number> = {
+    pending: pendingPhotos.length,
+    approved: approvedPhotos.length,
+    rejected: rejectedPhotos.length,
+  };
+  const requestCounts: Record<Tab, number> = {
+    pending: requests.filter((r) => statusOf(r) === 'pending').length,
+    approved: requests.filter((r) => statusOf(r) === 'approved').length,
+    rejected: requests.filter((r) => statusOf(r) === 'rejected').length,
+  };
+  const totalByTab: Record<Tab, number> = {
+    pending: requestCounts.pending + photoCounts.pending,
+    approved: requestCounts.approved + photoCounts.approved,
+    rejected: requestCounts.rejected + photoCounts.rejected,
+  };
+  const tabRequests = requests.filter((r) => statusOf(r) === tab);
+  const tabPhotos = tab === 'pending' ? pendingPhotos : tab === 'approved' ? approvedPhotos : rejectedPhotos;
 
   return (
     <div className="space-y-8">
@@ -54,21 +83,50 @@ export default async function ContributionsPage() {
         </p>
       </div>
 
+      {/* Tabs: Pending | Approved | Rejected */}
+      <div className="flex gap-2 overflow-x-auto pb-1" role="tablist" aria-label="Contribution status">
+        {TABS.map((t) => {
+          const active = tab === t;
+          return (
+            <Link
+              key={t}
+              href={`/contributions?tab=${t}`}
+              role="tab"
+              aria-selected={active}
+              className={cn(
+                'flex shrink-0 items-center gap-1.5 rounded-full px-4 py-2.5 text-sm font-semibold transition',
+                active ? 'bg-goldDeep text-white shadow-card' : 'border border-line bg-white text-inkSoft hover:text-goldDeep',
+              )}
+            >
+              {TAB_LABEL[t]}
+              <span className={cn('rounded-full px-1.5 py-0.5 text-[10px] font-bold', active ? 'bg-white/20' : 'bg-parchment')}>{totalByTab[t]}</span>
+            </Link>
+          );
+        })}
+      </div>
+
+      {tab === 'pending' && totalByTab.pending === 0 && (
+        <div className="card flex flex-col items-center gap-2 p-8 text-center">
+          <Icon name="inbox" className="h-7 w-7 text-inkSoft/40" />
+          <p className="text-sm text-inkSoft">
+            Nothing pending.{' '}
+            <Link href="/family" className="font-semibold text-goldDeep hover:text-gold">Suggest a correction</Link> or upload a photo to get started.
+          </p>
+        </div>
+      )}
+
       <section>
         <h2 className="mb-3 font-display text-lg font-bold text-ink">
-          Change requests <span className="text-sm font-normal text-inkSoft">({requests.length})</span>
+          Change requests <span className="text-sm font-normal text-inkSoft">({tabRequests.length})</span>
         </h2>
-        {requests.length === 0 ? (
+        {tabRequests.length === 0 ? (
           <div className="card flex flex-col items-center gap-2 p-8 text-center">
             <Icon name="inbox" className="h-7 w-7 text-inkSoft/40" />
-            <p className="text-sm text-inkSoft">
-              You haven&apos;t submitted any changes yet.{' '}
-              <Link href="/family" className="font-semibold text-goldDeep hover:text-gold">Suggest a correction</Link> from any profile.
-            </p>
+            <p className="text-sm text-inkSoft">No {TAB_LABEL[tab].toLowerCase()} change requests.</p>
           </div>
         ) : (
           <ul className="space-y-3">
-            {requests.map((r) => {
+            {tabRequests.map((r) => {
               const proposed = r.proposedData as Record<string, unknown> | null;
               const target = r.targetMember ? `${r.targetMember.firstName} ${r.targetMember.lastName}` : 'New member';
               return (
@@ -105,20 +163,14 @@ export default async function ContributionsPage() {
       </section>
 
       <section>
-        <h2 className="mb-3 font-display text-lg font-bold text-ink">My photos <span className="text-sm font-normal text-inkSoft">({photos.length})</span></h2>
-        {photos.length === 0 ? (
+        <h2 className="mb-3 font-display text-lg font-bold text-ink">My photos <span className="text-sm font-normal text-inkSoft">({tabPhotos.length})</span></h2>
+        {tabPhotos.length === 0 ? (
           <div className="card flex flex-col items-center gap-2 p-8 text-center">
             <Icon name="camera" className="h-7 w-7 text-inkSoft/40" />
-            <p className="text-sm text-inkSoft">Upload your first photo from the <Link href="/photos" className="font-semibold text-goldDeep hover:text-gold">Photo archive</Link>.</p>
+            <p className="text-sm text-inkSoft">No {TAB_LABEL[tab].toLowerCase()} photos.</p>
           </div>
         ) : (
-          <div className="space-y-4">
-            {pendingPhotos.length > 0 && (
-              <PhotoRow title={`Pending review (${pendingPhotos.length})`} photos={pendingPhotos} />
-            )}
-            {approvedPhotos.length > 0 && <PhotoRow title={`Published (${approvedPhotos.length})`} photos={approvedPhotos} />}
-            {rejectedPhotos.length > 0 && <PhotoRow title={`Not approved (${rejectedPhotos.length})`} photos={rejectedPhotos} />}
-          </div>
+          <PhotoRow title={`${TAB_LABEL[tab]} photos (${tabPhotos.length})`} photos={tabPhotos} />
         )}
       </section>
     </div>

@@ -12,7 +12,7 @@ cp .env.example .env
 docker compose up --build
 
 # 3. Open the app
-open http://localhost:3000
+open http://localhost:3844
 ```
 
 On first start the container waits for the database, applies migrations, and seeds a demo **Cruz family** (4 generations, reunion albums, sample photos, and a pending approval) plus an administrator account.
@@ -42,9 +42,22 @@ node prisma/seed.mjs
 npm run dev
 ```
 
+## Public access
+
+The archive is **viewable by everyone** — the family tree, directory, profiles, photo galleries, reunions, and timeline all render for visitors without an account. Only **editing** requires signing in or requesting access:
+
+- Uploading photos, tagging, and favoriting → requires a member account
+- Suggesting corrections / new members → requires a member account
+- Admin management (`/admin*`) → administrator only
+- Viewing (pages, approved photos, search, reunions) → no account needed
+
+Anonymous visitors see **Sign in / Request access** buttons instead of edit controls, and living members' detailed information stays hidden from non-administrators (per the privacy setting). All mutations are still authorized server-side — making a page public never bypasses the API checks.
+
 ## What's included
 
-- **Interactive family tree** — zoom, pan, fit, expand/collapse branches, focus a person, search, branch filtering, profile cards, and a detail drawer. Parent/child (vertical), spouse (horizontal), sibling (grouped), adopted & step relationships (dashed) with a legend. Multiple spouses are supported.
+- **Mobile-first design** — bottom navigation (**Tree | Family | Photos | Reunions | More**) with a bottom sheet on phones, compact sticky header, touch-sized targets, a 2-column photo grid, swipeable + pinch-zoom lightbox, camera/library upload buttons, collapsible profile sections, and a focused tree view on phones. Verified at 320–1280px with zero horizontal page overflow.
+- **PWA support** — installable via the web manifest, app icons, and a service worker that caches only static assets (never private data).
+- **Interactive family tree** — zoom, pan, fit, expand/collapse branches, **focus mode** (show just the selected person + parents/siblings/spouse/children, with group toggles), search, branch filtering, profile cards, and a detail drawer. Parent/child (vertical), spouse (horizontal), sibling (grouped), adopted & step relationships (dashed) with a legend. Multiple spouses are supported.
 - **Approval workflow** — every genealogy or profile change submitted by a member enters a **Pending Approval** queue; administrators review with old → new values, reason, and submitter, then approve / reject / request clarification. Approvals update the official tree and are recorded in the **audit log**.
 - **Genealogy integrity** — server-side validation prevents self-parents, duplicate relationships, spouse/parent conflicts, and circular parent chains.
 - **Photos** — drag & drop / phone uploads with automatic optimization (re-encoded original, webp optimized, thumbnail via sharp), EXIF/GPS stripped, pending-review approval flow, masonry gallery, lazy loading, full-screen lightbox, tagging, favorites, and permission-gated downloads.
@@ -87,4 +100,22 @@ src/middleware.ts      → session + role guards on pages and APIs (never trust 
 
 ## Roadmap ideas
 
-GEDCOM import/export, family stories & documents, video/audio archive, reunion RSVPs, QR profile codes, email notifications, Google login.
+Family stories & documents, video/audio archive, reunion RSVPs, QR profile codes, email notifications, Google login.
+
+## Verification scripts
+
+```bash
+npm run test            # unit + API workflow tests (requires the app running on :3844)
+node scripts/visual-check.mjs   # DOM health check + screenshots (Chrome)
+node scripts/mobile-check.mjs   # 128 viewport/page checks for horizontal overflow (Chrome)
+```
+
+## Sample reunion photos
+
+Reunion albums ship with generated sample photos (illustrated group-photo scenes — no external assets, safe for an air-gapped container). To top up existing albums that are empty or sparse:
+
+```bash
+docker compose exec app node prisma/fill-reunion-photos.mjs
+```
+
+The seed itself also fills every album on a fresh database.
