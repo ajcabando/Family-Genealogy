@@ -12,7 +12,14 @@ body {
 }
 
 body {
-  @apply bg-[#f4f6fa] text-ink font-body antialiased;
+  @apply bg-appBg text-ink font-body antialiased;
+}
+
+/* Decorative wash so large pages aren't flat, without tinting the whole UI. */
+.app-backdrop {
+  background-image:
+    radial-gradient(60rem 32rem at 15% -8%, rgba(91, 75, 219, 0.07), transparent 60%),
+    radial-gradient(48rem 28rem at 92% 4%, rgba(0, 184, 169, 0.06), transparent 62%);
 }
 
 /* New utility classes for dashboard redesign */
@@ -49,14 +56,14 @@ body {
 /* ---------- scrollbars ---------- */
 * {
   scrollbar-width: thin;
-  scrollbar-color: #d4c9b4 transparent;
+  scrollbar-color: #c7ccd9 transparent;
 }
 *::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 *::-webkit-scrollbar-thumb {
-  background: #d4c9b4;
+  background: #c7ccd9;
   border-radius: 8px;
 }
 
@@ -65,22 +72,22 @@ body {
   display: none;
 }
 .react-flow__controls {
-  box-shadow: 0 2px 10px rgba(43, 36, 28, 0.15);
+  box-shadow: 0 4px 20px rgba(20, 25, 50, 0.1);
   border-radius: 12px;
   overflow: hidden;
 }
 .react-flow__controls-button {
-  background: #fffdf8;
-  border-bottom: 1px solid #e6dcc9;
-  color: #5c5244;
+  background: #ffffff;
+  border-bottom: 1px solid #e6e9f2;
+  color: #6b7280;
 }
 .react-flow__controls-button:hover {
-  background: #f3ecdf;
+  background: #f6f8fc;
 }
 .react-flow__minimap {
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 2px 10px rgba(43, 36, 28, 0.15);
+  box-shadow: 0 4px 20px rgba(20, 25, 50, 0.1);
 }
 /* Soft, rounded relationship lines with a gentle focus transition */
 .react-flow__edge-path {
@@ -221,28 +228,32 @@ body {
 
 /* ---------- inputs ---------- */
 .input {
-  @apply w-full rounded-xl border border-line bg-white px-3.5 py-2.5 text-sm text-ink placeholder:text-inkSoft/60 outline-none transition focus:border-gold focus:ring-2 focus:ring-gold/25;
+  @apply w-full rounded-xl border border-line bg-white px-3.5 py-2.5 text-sm text-ink placeholder:text-inkSoft/60 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20;
 }
 .label {
   @apply mb-1 block text-xs font-semibold uppercase tracking-wide text-inkSoft;
 }
 .btn {
-  @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-gold/40 disabled:opacity-50 disabled:cursor-not-allowed;
+  @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-primary/35 disabled:opacity-50 disabled:cursor-not-allowed;
 }
 .btn-primary {
-  @apply btn bg-navyAccent text-white hover:bg-navyAccent/90 shadow-card;
+  @apply btn bg-primary text-white hover:bg-primaryHover shadow-card;
 }
 .btn-gold {
   @apply btn bg-gold text-white hover:bg-goldDeep shadow-card;
 }
 .btn-ghost {
-  @apply btn border border-line bg-white text-ink hover:border-gold hover:text-goldDeep;
+  @apply btn border border-line bg-white text-ink hover:border-primary/40 hover:text-primary;
 }
 .btn-danger {
   @apply btn bg-rust text-white hover:bg-rust/90;
 }
 .card {
-  @apply rounded-2xl border border-line/60 bg-white shadow-card;
+  @apply rounded-2xl border border-line/70 bg-white shadow-card;
+}
+/* Lighter-weight surface for nested content inside a card. */
+.card-quiet {
+  @apply rounded-2xl border border-line/60 bg-appBg/70;
 }
 
 /* Pill tabs / filters (matching the archive design system) */
@@ -250,17 +261,34 @@ body {
   @apply inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 text-xs font-semibold transition;
 }
 .pill-active {
-  @apply pill bg-navyAccent text-white shadow-card;
+  @apply pill bg-primary text-white shadow-card;
 }
 .pill-inactive {
-  @apply pill border border-line bg-white text-inkSoft hover:text-navyAccent;
+  @apply pill border border-line bg-white text-inkSoft hover:border-primary/40 hover:text-primary;
 }
+
+/* ---------- Cruz Family Archive helpers ---------- */
+/* Section heading used across pages so type scale stays consistent. */
+.section-title {
+  @apply font-display text-lg font-bold text-ink;
+}
+/* Coloured icon chip behind list/badge icons. */
+.chip {
+  @apply flex h-9 w-9 shrink-0 items-center justify-center rounded-xl;
+}
+/* Soft accent surfaces, one per semantic colour. */
+.chip-purple { @apply bg-accentPurpleSoft text-primary; }
+.chip-teal { @apply bg-accentMint text-accentTeal; }
+.chip-coral { @apply bg-accentCoralSoft text-accentCoral; }
+.chip-gold { @apply bg-accentGoldSoft text-goldDeep; }
+.chip-blue { @apply bg-accentBlueSoft text-accentBlue; }
+.chip-green { @apply bg-accentGreenSoft text-accentGreen; }
 
 .badge {
   @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-semibold;
 }
 .badge-gold {
-  @apply badge bg-orange-100 text-orange-600;
+  @apply badge bg-accentGoldSoft text-goldDeep;
 }
 .badge-green {
   @apply badge bg-sage/15 text-sage;
