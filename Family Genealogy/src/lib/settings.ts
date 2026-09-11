@@ -12,6 +12,15 @@ export const SETTING_DEFAULTS: Record<string, string> = {
   allowRegistration: 'true',
   showLivingBirthYearOnly: 'true',
   allowPhotoDownload: 'true',
+  heroBackground: '',
+  heroBackgroundOpacity: '60',
+  heroBackgroundPosY: '50',
+  photosHeroBackground: '',
+  photosHeroBackgroundOpacity: '60',
+  photosHeroBackgroundPosY: '50',
+  treeHeroBackground: '',
+  treeHeroBackgroundOpacity: '60',
+  treeHeroBackgroundPosY: '50',
 };
 
 export async function getSettings(): Promise<Record<string, string>> {

@@ -68,15 +68,14 @@ export function Directory({ entries }: { entries: DirectoryEntry[] }) {
         </select>
       </div>
 
-      <div className="mb-5 flex flex-wrap gap-1">
-        <button onClick={() => setLetter('')} className={cn('rounded-lg px-2.5 py-1 text-xs font-bold transition', !letter ? 'bg-goldDeep text-white' : 'text-inkSoft hover:bg-parchment')}>
-          All
-        </button>
+      <div className="mb-5 flex flex-wrap gap-1">          <button onClick={() => setLetter('')} className={cn('rounded-lg px-2.5 py-1 text-xs font-bold transition', !letter ? 'bg-navyAccent text-white' : 'text-inkSoft hover:bg-parchment')}>
+            All
+          </button>
         {letters.map((l) => (
           <button
             key={l}
             onClick={() => setLetter(letter === l ? '' : l)}
-            className={cn('rounded-lg px-2.5 py-1 text-xs font-bold transition', letter === l ? 'bg-goldDeep text-white' : 'text-inkSoft hover:bg-parchment')}
+            className={cn('rounded-lg px-2.5 py-1 text-xs font-bold transition', letter === l ? 'bg-navyAccent text-white' : 'text-inkSoft hover:bg-parchment')}
           >
             {l}
           </button>
@@ -103,11 +102,16 @@ export function Directory({ entries }: { entries: DirectoryEntry[] }) {
               <div className="min-w-0 flex-1">
                 <p className="truncate font-display text-sm font-bold text-ink group-hover:text-goldDeep">{fullName(e)}</p>
                 <p className="text-xs text-inkSoft">{yearsRange(e.birthDate, e.deathDate)}</p>
-                {(e.branch || e.location) && (
-                  <p className="mt-0.5 truncate text-[11px] text-inkSoft/80">
-                    {e.branch}{e.branch && e.location ? ' · ' : ''}{e.location}
-                  </p>
-                )}
+                <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                  {e.branch && (
+                    <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-700">{e.branch}</span>
+                  )}
+                  {e.location && (
+                    <span className="flex items-center gap-0.5 text-[11px] text-inkSoft/80">
+                      <Icon name="mapPin" className="h-3 w-3" /> {e.location}
+                    </span>
+                  )}
+                </div>
               </div>
             </Link>
           ))}

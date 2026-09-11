@@ -6,19 +6,38 @@ const COUPLE_GAP = 34;
 const GEN_GAP = 116;
 const UNIT_GAP = 64;
 
+// Generation lane colors + labels (matches the tree legend on the tree page).
+export const GEN_STYLES: Array<{ label: string; color: string }> = [
+  { label: 'Grandparents', color: '#ec4899' },
+  { label: 'Parents', color: '#3b82f6' },
+  { label: 'Siblings', color: '#22c55e' },
+  { label: 'Spouse', color: '#a855f7' },
+  { label: 'Children', color: '#f97316' },
+  { label: 'Grandchildren', color: '#14b8a6' },
+  { label: 'Great-Grandchildren', color: '#eab308' },
+];
+
+export function genStyle(g: number) {
+  return GEN_STYLES[g] || GEN_STYLES[GEN_STYLES.length - 1];
+}
+
 export type TreePerson = {
   id: string;
   firstName: string;
   middleName?: string | null;
   lastName: string;
+  nickname?: string | null;
   gender: string;
   birthYear?: number | null;
   deathYear?: number | null;
+  birthDate?: string | null;
+  birthPlace?: string | null;
   thumbUrl: string;
   branch?: string | null;
   occupation?: string | null;
   location?: string | null;
   deceased: boolean;
+  generation: number;
   photoThumb?: string | null;
 };
 
@@ -49,9 +68,11 @@ export type TreeMemberInput = {
   firstName: string;
   middleName?: string | null;
   lastName: string;
+  nickname?: string | null;
   gender: string;
   birthDate?: Date | string | null;
   deathDate?: Date | string | null;
+  birthPlace?: string | null;
   branch?: string | null;
   occupation?: string | null;
   location?: string | null;
@@ -90,14 +111,18 @@ export function buildTreeData(
       firstName: m.firstName,
       middleName: m.middleName,
       lastName: m.lastName,
+      nickname: m.nickname,
       gender: m.gender,
       birthYear: b ? b.getFullYear() : null,
       deathYear: d ? d.getFullYear() : null,
+      birthDate: m.birthDate ? new Date(m.birthDate).toISOString() : null,
+      birthPlace: m.birthPlace,
       thumbUrl: photoUrl({ thumbPath: m.profilePhoto?.thumbPath }),
       branch: m.branch,
       occupation: m.occupation,
       location: m.location,
       deceased: !!d,
+      generation: 0,
       photoThumb: m.profilePhoto?.thumbPath ?? null,
     });
   }
@@ -146,6 +171,12 @@ export function buildTreeData(
     return g;
   };
   for (const id of allIds) genMemo(id, new Set());
+
+  // Attach the generation to each person for row labels / badges.
+  for (const [id, g] of gen) {
+    const p = people.get(id);
+    if (p) p.generation = g;
+  }
 
   // ---- Couple units ----
   type Unit = {

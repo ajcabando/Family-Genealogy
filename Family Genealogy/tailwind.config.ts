@@ -14,7 +14,22 @@ const config: Config = {
         goldDeep: '#8a6d38',
         sage: '#7a8b6f',
         rust: '#a4583c',
-        line: '#e6dcc9',
+        line: '#e2e8f0',
+        // New sidebar colors
+        navy: '#1e293b',
+        navyLight: '#334155',
+        navyAccent: '#6366f1',
+        // Stat card icon backgrounds
+        blueSoft: '#eff6ff',
+        greenSoft: '#f0fdf4',
+        orangeSoft: '#fff7ed',
+        purpleSoft: '#faf5ff',
+        redSoft: '#fef2f2',
+        // Branch badge colors
+        branchBlue: '#3b82f6',
+        branchGreen: '#22c55e',
+        branchPurple: '#a855f7',
+        branchOrange: '#f97316',
       },
       fontFamily: {
         display: ['Georgia', 'Palatino Linotype', 'Book Antiqua', 'Times New Roman', 'serif'],
