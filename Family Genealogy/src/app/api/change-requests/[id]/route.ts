@@ -3,6 +3,7 @@ import { prisma } from '@/lib/db';
 import { apiAuth } from '@/lib/api-helpers';
 import { audit } from '@/lib/audit';
 import { validateParentChild, validateSpouse } from '@/lib/validation';
+import { normalizeProfileUpdate } from '@/lib/change-request-fields';
 
 const PARENT_KIND: Record<string, string> = {
   PARENT: 'PARENT',
@@ -89,10 +90,10 @@ async function applyChange(requestType: string, targetType: string, targetId: st
     if (!targetId) return 'Missing target member';
     const member = await prisma.familyMember.findUnique({ where: { id: targetId } });
     if (!member || member.deletedAt) return 'Target member not found';
-    const field = String(p.field);
+    const { field, value: rawValue } = normalizeProfileUpdate(p);
     const allowed = ['firstName', 'middleName', 'lastName', 'maidenName', 'nickname', 'gender', 'birthDate', 'birthPlace', 'deathDate', 'deathPlace', 'biography', 'occupation', 'location', 'branch'];
     if (!allowed.includes(field)) return 'Invalid field';
-    let value: unknown = p.value;
+    let value: unknown = rawValue;
     if ((field === 'birthDate' || field === 'deathDate') && value) {
       value = new Date(String(value));
     }

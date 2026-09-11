@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { Icon } from '../icons';
 import { cn, formatRelative, photoUrl } from '@/lib/utils';
+import { normalizeProfileUpdate } from '@/lib/change-request-fields';
 import type { GalleryPhoto } from '@/lib/photo-shared';
 
 type Member = { id: string; firstName: string; lastName: string };
@@ -61,22 +62,47 @@ export function ApprovalQueue({ requests, photos, members, initialTab = 'request
     setBusy(null);
   }
 
+  async function approveAllPhotos() {
+    if (photoItems.length === 0) return;
+    setBusy('approve-all');
+    setError('');
+    let ok = 0;
+    let failed = 0;
+    for (const photo of photoItems) {
+      const res = await fetch(`/api/photos/${photo.id}/review`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'approve' }),
+      });
+      if (res.ok) ok++;
+      else failed++;
+    }
+    if (failed === 0) {
+      setPhotoItems([]);
+    } else {
+      setError(`${ok} approved, ${failed} failed`);
+      setPhotoItems((prev) => prev.slice(ok));
+    }
+    setBusy(null);
+  }
+
   const requestBody = (r: RequestItem) => {
     const p = (r.proposedData || {}) as Record<string, unknown>;
     const o = (r.oldData || {}) as Record<string, unknown>;
     if (r.requestType === 'PROFILE_UPDATE') {
-      const field = String(p.field || '').replace(/([A-Z])/g, ' $1').toLowerCase();
+      const { field: rawField, value } = normalizeProfileUpdate(p);
+      const field = rawField.replace(/([A-Z])/g, ' $1').toLowerCase();
       return (
         <div className="rounded-xl bg-cream p-3 text-sm">
           <p className="font-semibold text-ink">Update {field} {r.targetMember ? `for ${r.targetMember.firstName} ${r.targetMember.lastName}` : ''}</p>
           <div className="mt-2 grid gap-2 sm:grid-cols-2">
             <div className="rounded-lg border border-line/60 bg-white p-2.5">
               <p className="text-[10px] font-bold uppercase tracking-wide text-inkSoft/70">Current</p>
-              <p className="mt-0.5 break-words text-inkSoft">{o[String(p.field)] ? String(o[String(p.field)]) : <em className="text-inkSoft/60">not set</em>}</p>
+              <p className="mt-0.5 break-words text-inkSoft">{o[rawField] ? String(o[rawField]) : <em className="text-inkSoft/60">not set</em>}</p>
             </div>
             <div className="rounded-lg border border-gold/40 bg-white p-2.5">
               <p className="text-[10px] font-bold uppercase tracking-wide text-goldDeep">Proposed</p>
-              <p className="mt-0.5 break-words font-semibold text-ink">{String(p.value ?? '')}</p>
+              <p className="mt-0.5 break-words font-semibold text-ink">{String(value ?? '')}</p>
             </div>
           </div>
         </div>
@@ -201,7 +227,20 @@ export function ApprovalQueue({ requests, photos, members, initialTab = 'request
       )}
 
       {tab === 'photos' && (
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <div>
+          {photoItems.length > 0 && (
+            <div className="mb-4 flex items-center justify-between">
+              <p className="text-sm text-inkSoft">{photoItems.length} photo{photoItems.length === 1 ? '' : 's'} pending</p>
+              <button
+                disabled={busy === 'approve-all'}
+                onClick={approveAllPhotos}
+                className="btn-primary"
+              >
+                {busy === 'approve-all' ? 'Approving…' : `Approve All (${photoItems.length})`}
+              </button>
+            </div>
+          )}
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {photoItems.length === 0 ? (
             <div className="card col-span-full flex flex-col items-center gap-2 p-10 text-center">
               <Icon name="check" className="h-8 w-8 text-sage" />
@@ -236,6 +275,7 @@ export function ApprovalQueue({ requests, photos, members, initialTab = 'request
               </div>
             ))
           )}
+        </div>
         </div>
       )}
     </div>
