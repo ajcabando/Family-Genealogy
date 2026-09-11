@@ -18,6 +18,10 @@ export async function GET(req: NextRequest) {
   const limit = Math.min(60, Math.max(1, Number(searchParams.get('limit')) || 24));
   const albumId = searchParams.get('albumId') || undefined;
   const personId = searchParams.get('personId') || undefined;
+  const favorite = searchParams.get('favorite') === '1';
+  const location = searchParams.get('location') || undefined;
+  const sort = searchParams.get('sort') || 'newest';
+  const q = searchParams.get('q') || undefined;
   const scope = searchParams.get('scope') || 'approved';
   const isAdmin = auth.user?.role === 'ADMIN';
   const memberId = auth.user?.memberId || null;
@@ -35,10 +39,15 @@ export async function GET(req: NextRequest) {
   const where: Record<string, unknown> = { deletedAt: null, ...(approvalStatus ? { approvalStatus } : {}) };
   if (albumId) where.albums = { some: { albumId } };
   if (personId) where.tags = { some: { memberId: personId } };
+  if (favorite) where.favorite = true;
+  if (location) where.location = location;
+  if (q) where.caption = { contains: q, mode: 'insensitive' };
   if (scope === 'pending' && !isAdmin) where.uploadedById = memberId;
 
+  const orderBy = sort === 'oldest' ? { createdAt: 'asc' as const } : { createdAt: 'desc' as const };
+
   const [photos, total] = await Promise.all([
-    prisma.photo.findMany({ where, include: PHOTO_INCLUDE, orderBy: { createdAt: 'desc' }, skip: (page - 1) * limit, take: limit }),
+    prisma.photo.findMany({ where, include: PHOTO_INCLUDE, orderBy, skip: (page - 1) * limit, take: limit }),
     prisma.photo.count({ where }),
   ]);
 

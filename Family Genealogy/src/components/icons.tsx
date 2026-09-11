@@ -33,6 +33,16 @@ const PATHS: Record<string, string> = {
   userPlus: 'M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM19 8v6m-3-3h6',
   menu: 'M3 6h18M3 12h18M3 18h18',
   book: 'M4 19V5a2 2 0 012-2h8l6 6v10a2 2 0 01-2 2H6a2 2 0 01-2-2zM14 3v6h6M8 13h8M8 17h5',
+  grid: 'M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z',
+  list: 'M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01',
+  folder: 'M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V7z',
+  dots: 'M5 12a1.2 1.2 0 100-2.4 1.2 1.2 0 000 2.4zM12 12a1.2 1.2 0 100-2.4 1.2 1.2 0 000 2.4zM19 12a1.2 1.2 0 100-2.4 1.2 1.2 0 000 2.4z',
+  pin: 'M9 4h6l-.6 5.2 2.9 2.9c.3.3.1.9-.4.9H13v6l-1 1.5L11 19v-6H6.1c-.5 0-.7-.6-.4-.9l2.9-2.9L8 4z',
+  fullscreen: 'M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5',
+  target: 'M12 21a9 9 0 100-18 9 9 0 000 18zM12 16a4 4 0 100-8 4 4 0 000 8zM12 13a1 1 0 100-2 1 1 0 000 2z',
+  refresh: 'M20 12a8 8 0 11-2.34-5.66M20 4v4h-4',
+  sun: 'M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M18.4 5.6L17 7M7 17l-1.4 1.4M12 8a4 4 0 100 8 4 4 0 000-8z',
+  logOut: 'M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4M10 17l5-5-5-5M15 12H3',
 };
 
 export function Icon({ name, className }: { name: string; className?: string }) {

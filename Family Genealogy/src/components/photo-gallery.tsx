@@ -21,6 +21,11 @@ export function PhotoGallery({
   total,
   albumId,
   personId,
+  favoritesOnly = false,
+  locationFilter,
+  sort = 'newest',
+  query,
+  viewMode = 'grid',
   canDownload,
   canEdit = true,
   members,
@@ -31,6 +36,11 @@ export function PhotoGallery({
   total: number;
   albumId?: string;
   personId?: string;
+  favoritesOnly?: boolean;
+  locationFilter?: string;
+  sort?: 'newest' | 'oldest';
+  query?: string;
+  viewMode?: 'grid' | 'list';
   canDownload: boolean;
   /** Whether the viewer is signed in (enables favorites + tagging). */
   canEdit?: boolean;
@@ -59,6 +69,7 @@ export function PhotoGallery({
   const [commentsLoaded, setCommentsLoaded] = useState(false);
   const [commentText, setCommentText] = useState('');
   const [commentBusy, setCommentBusy] = useState(false);
+  const [commentError, setCommentError] = useState('');
   const commentInputRef = useRef<HTMLTextAreaElement>(null);
 
   const resetZoom = () => {
@@ -129,9 +140,12 @@ export function PhotoGallery({
 
   async function loadMore() {
     setLoadingMore(true);
-    const params = new URLSearchParams({ page: String(page + 1), limit: '24' });
+    const params = new URLSearchParams({ page: String(page + 1), limit: '24', sort });
     if (albumId) params.set('albumId', albumId);
     if (personId) params.set('personId', personId);
+    if (favoritesOnly) params.set('favorite', '1');
+    if (locationFilter) params.set('location', locationFilter);
+    if (query) params.set('q', query);
     const res = await fetch(`/api/photos?${params}`);
     if (res.ok) {
       const data = await res.json();
@@ -169,6 +183,7 @@ export function PhotoGallery({
     resetZoom();
     setTagOpen(false);
     setCommentText('');
+    setCommentError('');
     setCommentsLoaded(false);
     setComments([]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -189,12 +204,12 @@ export function PhotoGallery({
       .catch(() => setCommentsLoaded(true));
   }, [openIndex, commentsLoaded, photos]);
 
-  async function toggleFavorite() {
-    if (!openPhoto || busy) return;
+  async function toggleFavorite(photoId: string) {
+    if (busy) return;
     setBusy(true);
-    const res = await fetch(`/api/photos/${openPhoto.id}/favorite`, { method: 'POST' });
+    const res = await fetch(`/api/photos/${photoId}/favorite`, { method: 'POST' });
     if (res.ok) {
-      setPhotos((prev) => prev.map((p) => (p.id === openPhoto.id ? { ...p, favorite: !p.favorite } : p)));
+      setPhotos((prev) => prev.map((p) => (p.id === photoId ? { ...p, favorite: !p.favorite } : p)));
     }
     setBusy(false);
   }
@@ -234,15 +249,22 @@ export function PhotoGallery({
   async function postComment() {
     if (!openPhoto || !commentText.trim() || commentBusy) return;
     setCommentBusy(true);
-    const res = await fetch(`/api/photos/${openPhoto.id}/comments`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ body: commentText.trim() }),
-    });
-    if (res.ok) {
+    setCommentError('');
+    try {
+      const res = await fetch(`/api/photos/${openPhoto.id}/comments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ body: commentText.trim() }),
+      });
       const data = await res.json();
-      setComments((prev) => [...prev, data.comment]);
-      setCommentText('');
+      if (res.ok) {
+        setComments((prev) => [...prev, data.comment]);
+        setCommentText('');
+      } else {
+        setCommentError(data.error || 'Failed to post comment.');
+      }
+    } catch {
+      setCommentError('Network error — please try again.');
     }
     setCommentBusy(false);
   }
@@ -264,6 +286,52 @@ export function PhotoGallery({
           <Icon name="photo" className="h-8 w-8 text-inkSoft/40" />
           <p className="text-sm text-inkSoft">No photos here yet.</p>
         </div>
+      ) : viewMode === 'list' ? (
+        <div className="space-y-3">
+          {photos.map((p, i) => (
+            <button
+              key={p.id}
+              onClick={() => setOpenIndex(i)}
+              className="group flex w-full items-center gap-4 rounded-2xl border border-line/60 bg-white p-3 text-left shadow-card transition hover:shadow-lift"
+            >
+              <div className="h-20 w-24 shrink-0 overflow-hidden rounded-xl bg-parchment">
+                <img
+                  src={`/api/files/${p.optimizedPath}`}
+                  alt={p.caption || 'Family photo'}
+                  loading="lazy"
+                  className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
+                />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="truncate font-display text-sm font-bold text-ink">{p.caption || 'Family photo'}</p>
+                <p className="mt-1 text-xs text-inkSoft">
+                  {p.photoDate && <span>{formatDate(p.photoDate)}</span>}
+                  {p.photoDate && p.location && <span> • </span>}
+                  {p.location && <span>{p.location}</span>}
+                </p>
+                <p className="mt-1 flex items-center gap-3 text-[11px] text-inkSoft/80">
+                  {p.tags.length > 0 && <span className="flex items-center gap-1"><Icon name="user" className="h-3 w-3" />{plural(p.tags.length, 'person')}</span>}
+                  {p.comments.length > 0 && <span>{plural(p.comments.length, 'comment')}</span>}
+                </p>
+              </div>
+              {canEdit && (
+                <span
+                  role="button"
+                  tabIndex={-1}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleFavorite(p.id);
+                  }}
+                  className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full text-inkSoft transition hover:bg-parchment"
+                  title={p.favorite ? 'Remove favorite' : 'Add favorite'}
+                >
+                  <Icon name="heart" className={cn('h-4 w-4', p.favorite && 'fill-gold text-gold')} />
+                </span>
+              )}
+              <Icon name="chevronRight" className="h-4 w-4 shrink-0 text-inkSoft/40" />
+            </button>
+          ))}
+        </div>
       ) : (
         <div className="masonry">
           {photos.map((p) => (
@@ -278,17 +346,44 @@ export function PhotoGallery({
                 loading="lazy"
                 className="w-full object-cover transition duration-300 group-hover:scale-[1.02]"
               />
-              <div className="pointer-events-none absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-ink/70 via-transparent to-transparent p-3 opacity-0 transition group-hover:opacity-100">
-                {p.caption && <p className="line-clamp-2 text-sm font-semibold text-white">{p.caption}</p>}
-                <p className="mt-1 flex items-center gap-2 text-[11px] text-white/80">
-                  {p.photoDate && <span>{formatDate(p.photoDate)}</span>}
-                  {p.tags.length > 0 && <span>{plural(p.tags.length, 'person')} tagged</span>}
-                  {p.comments.length > 0 && <span>{plural(p.comments.length, 'comment')}</span>}
+              {/* favorite heart — top left */}
+              {canEdit ? (
+                <span
+                  role="button"
+                  tabIndex={-1}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleFavorite(p.id);
+                  }}
+                  className="absolute left-2.5 top-2.5 flex h-7 w-7 cursor-pointer items-center justify-center rounded-full bg-white/85 text-inkSoft shadow-card backdrop-blur transition hover:bg-white"
+                  title={p.favorite ? 'Remove favorite' : 'Add favorite'}
+                >
+                  <Icon name="heart" className={cn('h-3.5 w-3.5', p.favorite && 'fill-gold text-gold')} />
+                </span>
+              ) : p.favorite ? (
+                <span className="absolute left-2.5 top-2.5 flex h-7 w-7 items-center justify-center rounded-full bg-white/85 shadow-card">
+                  <Icon name="heart" className="h-3.5 w-3.5 fill-gold text-gold" />
+                </span>
+              ) : null}
+              {/* three-dot menu — top right */}
+              <span className="absolute right-2.5 top-2.5 flex h-7 w-7 items-center justify-center rounded-full bg-white/85 text-inkSoft shadow-card backdrop-blur">
+                <Icon name="dots" className="h-4 w-4" />
+              </span>
+              {/* bottom overlay: caption + date • location */}
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-ink/85 via-ink/45 to-transparent p-3 pt-10">
+                {p.caption && <p className="line-clamp-1 text-sm font-bold text-white">{p.caption}</p>}
+                <p className="mt-0.5 flex items-center gap-1.5 text-[11px] text-white/80">
+                  <Icon name="photo" className="h-3 w-3" />
+                  {p.photoDate ? formatDate(p.photoDate) : 'Date unknown'}
+                  {p.photoDate && p.location && <span>•</span>}
+                  {p.location && <span>{p.location}</span>}
                 </p>
               </div>
-              {p.favorite && (
-                <span className="absolute right-2.5 top-2.5 text-gold drop-shadow">
-                  <Icon name="heart" className="h-4 w-4 fill-gold" />
+              {/* person count — bottom right */}
+              {p.tags.length > 0 && (
+                <span className="pointer-events-none absolute bottom-3 right-3 flex items-center gap-1 text-[11px] font-bold text-white drop-shadow">
+                  <Icon name="user" className="h-3.5 w-3.5" />
+                  {p.tags.length}
                 </span>
               )}
             </button>
@@ -324,7 +419,7 @@ export function PhotoGallery({
               )}
               {canEdit && (
                 <>
-                  <button onClick={toggleFavorite} className="rounded-lg p-2.5 transition hover:bg-white/10" title="Favorite">
+                  <button onClick={() => toggleFavorite(openPhoto.id)} className="rounded-lg p-2.5 transition hover:bg-white/10" title="Favorite">
                     <Icon name="heart" className={cn('h-5 w-5', openPhoto.favorite && 'fill-gold text-gold')} />
                   </button>
                   <button onClick={() => setTagOpen((o) => !o)} className="rounded-lg p-2.5 text-white/80 transition hover:bg-white/10" title="Tag people">
@@ -389,7 +484,7 @@ export function PhotoGallery({
               )}
             </div>
 
-            <aside className="w-full shrink-0 border-t border-white/10 bg-ink/40 p-5 text-white lg:w-96 lg:border-l lg:border-t-0 lg:overflow-y-auto">
+            <aside onClick={(e) => e.stopPropagation()} className="w-full shrink-0 border-t border-white/10 bg-ink/40 p-5 text-white lg:w-96 lg:border-l lg:border-t-0 lg:overflow-y-auto">
               {openPhoto.caption && <h3 className="font-display text-lg font-bold">{openPhoto.caption}</h3>}
               {openPhoto.description && <p className="mt-2 text-sm text-white/70">{openPhoto.description}</p>}
               <dl className="mt-4 space-y-1.5 text-sm text-white/80">
@@ -509,7 +604,7 @@ export function PhotoGallery({
                     <textarea
                       ref={commentInputRef}
                       value={commentText}
-                      onChange={(e) => setCommentText(e.target.value)}
+                      onChange={(e) => { setCommentText(e.target.value); setCommentError(''); }}
                       placeholder="Add a comment…"
                       rows={2}
                       className="w-full resize-none rounded-xl border border-white/15 bg-white/5 px-3 py-2.5 text-sm text-white placeholder:text-white/30 outline-none transition focus:border-gold/50 focus:ring-1 focus:ring-gold/30"
@@ -521,7 +616,10 @@ export function PhotoGallery({
                       }}
                     />
                     <div className="mt-2 flex items-center justify-between">
-                      <p className="text-[11px] text-white/30">{commentText.length}/2000</p>
+                      <div className="min-w-0 flex-1">
+                        {commentError && <p className="text-[11px] text-rust">{commentError}</p>}
+                        {!commentError && <p className="text-[11px] text-white/30">{commentText.length}/2000</p>}
+                      </div>
                       <button
                         onClick={postComment}
                         disabled={!commentText.trim() || commentBusy || commentText.length > 2000}

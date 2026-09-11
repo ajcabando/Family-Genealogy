@@ -173,6 +173,7 @@ model Photo {
   albums          AlbumPhoto[]
   profileFor      FamilyMember[] @relation("MemberProfilePhoto")
   coverForReunion ReunionEvent[] @relation("ReunionCover")
+  coverForAlbum   ReunionAlbum[] @relation("AlbumCover")
 
   @@index([approvalStatus, createdAt])
   @@index([uploadedById])
@@ -235,6 +236,8 @@ model ReunionAlbum {
   reunionEventId String
   name           String
   description    String?
+  coverPhotoId   String?
+  coverPhoto     Photo?        @relation("AlbumCover", fields: [coverPhotoId], references: [id], onDelete: SetNull)
   createdAt      DateTime      @default(now())
 
   reunionEvent   ReunionEvent  @relation(fields: [reunionEventId], references: [id], onDelete: Cascade)

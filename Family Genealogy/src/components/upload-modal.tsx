@@ -1,11 +1,12 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Icon } from './icons';
 import { cn } from '@/lib/utils';
 
 type MemberOption = { id: string; name: string };
+type AlbumOption = { id: string; name: string; eventName: string; photoCount: number };
 
 export function UploadModal({
   albumId,
@@ -29,11 +30,22 @@ export function UploadModal({
   const [location, setLocation] = useState('');
   const [photographer, setPhotographer] = useState('');
   const [tagIds, setTagIds] = useState<Set<string>>(new Set());
+  const [selectedAlbumId, setSelectedAlbumId] = useState<string>(albumId || '');
+  const [albums, setAlbums] = useState<AlbumOption[]>([]);
   const [dragOver, setDragOver] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState('');
   const [done, setDone] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      fetch('/api/albums')
+        .then((res) => res.json())
+        .then((data) => setAlbums(data.albums || []))
+        .catch(() => setAlbums([]));
+    }
+  }, [open]);
 
   if (!open) return null;
 
@@ -56,7 +68,7 @@ export function UploadModal({
       fd.append('location', location);
       fd.append('photographer', photographer);
       fd.append('tags', JSON.stringify([...tagIds]));
-      if (albumId) fd.append('albumId', albumId);
+      if (selectedAlbumId) fd.append('albumId', selectedAlbumId);
       const res = await fetch('/api/photos', { method: 'POST', body: fd });
       if (res.ok) ok++;
       setProgress(i + 1);
@@ -172,6 +184,22 @@ export function UploadModal({
                 ))}
               </div>
             )}
+
+            <div>
+              <label className={label}>Album</label>
+              <select
+                className={input}
+                value={selectedAlbumId}
+                onChange={(e) => setSelectedAlbumId(e.target.value)}
+              >
+                <option value="">No album (standalone photos)</option>
+                {albums.map((album) => (
+                  <option key={album.id} value={album.id}>
+                    {album.name} — {album.eventName} ({album.photoCount} photos)
+                  </option>
+                ))}
+              </select>
+            </div>
 
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>

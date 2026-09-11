@@ -4,7 +4,7 @@ import { apiAuth } from '@/lib/api-helpers';
 import { audit } from '@/lib/audit';
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
-  const auth = await apiAuth(req, { admin: true });
+  const auth = await apiAuth(req);
   if (auth instanceof Response) return auth;
   const { user } = auth;
 

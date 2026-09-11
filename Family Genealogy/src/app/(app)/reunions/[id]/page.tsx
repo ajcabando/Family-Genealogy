@@ -8,6 +8,7 @@ import { PhotoGallery } from '@/components/photo-gallery';
 import { EventUploader } from '@/components/event-uploader';
 import { NewAlbumModal } from '@/components/new-album-modal';
 import { DeleteAlbumButton } from '@/components/delete-album-button';
+import { AlbumCoverButton } from '@/components/album-cover-button';
 import { memberOptions } from '@/lib/members';
 import { Icon } from '@/components/icons';
 import { formatDate, plural, photoUrl } from '@/lib/utils';
@@ -22,7 +23,7 @@ export default async function ReunionDetailPage({ params, searchParams }: { para
 
   const reunion = await prisma.reunionEvent.findUnique({
     where: { id: params.id },
-    include: { coverPhoto: { select: { thumbPath: true, optimizedPath: true } }, albums: { orderBy: { createdAt: 'asc' } } },
+    include: { albums: { orderBy: { createdAt: 'asc' } } },
   });
   if (!reunion) notFound();
 
@@ -86,25 +87,26 @@ export default async function ReunionDetailPage({ params, searchParams }: { para
   }
 
   // ---- Overview: hero + album grid ----
+  // Hero background mirrors the dashboard hero (admin-configurable image + opacity/posY).
+  const heroBgUrl = settings.heroBackground ? `/api/files/${settings.heroBackground}` : '/hero-beach.svg';
+  const heroOpacity = Math.min(100, Math.max(10, parseInt(settings.heroBackgroundOpacity || '60', 10))) / 100;
+  const heroPosY = Math.min(100, Math.max(0, parseInt(settings.heroBackgroundPosY || '50', 10)));
+
   return (
     <div className="space-y-6">
-      <div className="relative overflow-hidden rounded-3xl border border-line/60 bg-white shadow-card">
-        {reunion.coverPhoto && (
-          <div className="absolute inset-0">
-            <img src={photoUrl(reunion.coverPhoto, 'full')} alt="" className="h-full w-full object-cover" />
-            <div className="absolute inset-0 bg-gradient-to-t from-ink/80 via-ink/30 to-transparent" />
-          </div>
-        )}
-        <div className={`relative p-6 sm:p-10 ${reunion.coverPhoto ? 'text-white' : ''}`}>
-          <p className={`text-xs font-semibold uppercase tracking-[0.2em] ${reunion.coverPhoto ? 'text-white/70' : 'text-goldDeep'}`}>
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-navy via-navyLight to-navy p-6 text-white shadow-lift sm:p-10">
+        <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url('${heroBgUrl}')`, opacity: heroOpacity, backgroundPositionY: `${heroPosY}%` }} />
+        <div className="absolute inset-0 bg-gradient-to-r from-navy/60 via-navy/40 to-navy/30" />
+        <div className="relative z-10">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/70">
             {new Date(reunion.date) >= new Date() ? 'Upcoming reunion' : 'Past reunion'}
           </p>
           <h1 className="mt-2 font-display text-3xl font-bold sm:text-4xl">{reunion.name}</h1>
-          <p className={`mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm ${reunion.coverPhoto ? 'text-white/80' : 'text-inkSoft'}`}>
+          <p className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-white/80">
             <span className="flex items-center gap-1.5"><Icon name="calendar" className="h-4 w-4" /> {formatDate(reunion.date)}</span>
             {reunion.location && <span className="flex items-center gap-1.5"><Icon name="mapPin" className="h-4 w-4" /> {reunion.location}</span>}
           </p>
-          {reunion.description && <p className={`mt-3 max-w-2xl text-sm ${reunion.coverPhoto ? 'text-white/75' : 'text-inkSoft'}`}>{reunion.description}</p>}
+          {reunion.description && <p className="mt-3 max-w-2xl text-sm text-white/75">{reunion.description}</p>}
         </div>
       </div>
 
@@ -112,13 +114,15 @@ export default async function ReunionDetailPage({ params, searchParams }: { para
         <h2 className="font-display text-xl font-bold text-ink">Albums</h2>
         <div className="flex items-center gap-2">
           {session ? (
-            <EventUploader albums={reunion.albums} members={memberOptions(members)} approvalRequired={approvalRequired} />
+            <>
+              <EventUploader albums={reunion.albums} members={memberOptions(members)} approvalRequired={approvalRequired} />
+              <NewAlbumModal reunionId={reunion.id} />
+            </>
           ) : (
             <Link href="/login" className="btn-primary">
               <Icon name="camera" className="h-4 w-4" /> Sign in to upload
             </Link>
           )}
-          <NewAlbumModal reunionId={reunion.id} isAdmin={isAdmin} />
         </div>
       </div>      {reunion.albums.length === 0 ? (
         <div className="card flex flex-col items-center gap-2 p-10 text-center">
@@ -139,18 +143,27 @@ async function AlbumGrid({
   isAdmin,
 }: {
   reunionId: string;
-  albums: { id: string; name: string; description: string | null }[];
+  albums: { id: string; name: string; description: string | null; coverPhotoId: string | null }[];
   counts: Map<string, number>;
   isAdmin: boolean;
 }) {
   const covers = await prisma.albumPhoto.findMany({
     where: { albumId: { in: albums.map((a) => a.id) }, photo: { approvalStatus: 'APPROVED', deletedAt: null } },
-    include: { photo: { select: { optimizedPath: true, thumbPath: true } } },
-    orderBy: { createdAt: 'asc' },
+    include: { photo: { select: { id: true, optimizedPath: true, thumbPath: true } } },
   });
-  const coverByAlbum = new Map<string, { optimizedPath: string | null; thumbPath: string }>();
+  // Cover per album: the pinned photo if set, otherwise a random one (fresh highlight on every visit).
+  const photosByAlbum = new Map<string, { id: string; optimizedPath: string | null; thumbPath: string }[]>();
   for (const c of covers) {
-    if (!coverByAlbum.has(c.albumId)) coverByAlbum.set(c.albumId, c.photo);
+    const list = photosByAlbum.get(c.albumId);
+    if (list) list.push(c.photo);
+    else photosByAlbum.set(c.albumId, [c.photo]);
+  }
+  const coverByAlbum = new Map<string, { id: string; optimizedPath: string | null; thumbPath: string }>();
+  for (const album of albums) {
+    const list = photosByAlbum.get(album.id) || [];
+    if (list.length === 0) continue;
+    const pinned = album.coverPhotoId ? list.find((p) => p.id === album.coverPhotoId) : null;
+    coverByAlbum.set(album.id, pinned || list[Math.floor(Math.random() * list.length)]);
   }
 
   return (
@@ -161,6 +174,7 @@ async function AlbumGrid({
         return (
           <div key={a.id} className="card group overflow-hidden transition hover:-translate-y-0.5 hover:shadow-lift">
             <Link href={`/reunions/${reunionId}?album=${a.id}`} className="relative block h-44 overflow-hidden">
+              {isAdmin && <span className="absolute right-2 top-2 z-10"><AlbumCoverButton albumId={a.id} coverPhotoId={a.coverPhotoId} /></span>}
               {cover ? (
                 <img src={photoUrl(cover, 'full')} alt="" className="h-full w-full object-cover transition duration-300 group-hover:scale-105" />
               ) : (

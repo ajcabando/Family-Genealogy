@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Icon } from './icons';
 
-export function NewReunionModal({ isAdmin }: { isAdmin: boolean }) {
+export function NewReunionModal({ isAdmin, label = 'New reunion' }: { isAdmin: boolean; label?: string }) {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ name: '', date: '', location: '', description: '' });
   const [error, setError] = useState('');
@@ -36,7 +36,7 @@ export function NewReunionModal({ isAdmin }: { isAdmin: boolean }) {
   return (
     <>
       <button onClick={() => setOpen(true)} className="btn-primary">
-        <Icon name="plus" className="h-4 w-4" /> New reunion
+        <Icon name="plus" className="h-4 w-4" /> {label}
       </button>
       {open && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-ink/40 p-4 animate-fade-in" onClick={() => setOpen(false)}>

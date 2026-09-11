@@ -4,15 +4,13 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Icon } from './icons';
 
-export function NewAlbumModal({ reunionId, isAdmin }: { reunionId: string; isAdmin: boolean }) {
+export function NewAlbumModal({ reunionId }: { reunionId: string }) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [error, setError] = useState('');
   const [sending, setSending] = useState(false);
   const router = useRouter();
-
-  if (!isAdmin) return null;
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();

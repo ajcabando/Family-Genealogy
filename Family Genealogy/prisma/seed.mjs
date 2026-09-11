@@ -389,7 +389,7 @@ async function main() {
       targetId: sofia.id,
       submittedById: alainUser.id,
       oldData: { nickname: null },
-      proposedData: { nickname: 'Sofie' },
+      proposedData: { field: 'nickname', value: 'Sofie' },
       reason: 'Everyone in the family calls her Sofie — adding it as her nickname.',
     },
   });
