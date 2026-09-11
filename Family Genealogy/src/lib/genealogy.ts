@@ -8,13 +8,13 @@ const UNIT_GAP = 64;
 
 // Generation lane colors + labels (matches the tree legend on the tree page).
 export const GEN_STYLES: Array<{ label: string; color: string }> = [
-  { label: 'Grandparents', color: '#ec4899' },
-  { label: 'Parents', color: '#3b82f6' },
-  { label: 'Siblings', color: '#22c55e' },
-  { label: 'Spouse', color: '#a855f7' },
-  { label: 'Children', color: '#f97316' },
-  { label: 'Grandchildren', color: '#14b8a6' },
-  { label: 'Great-Grandchildren', color: '#eab308' },
+  { label: 'Grandparents', color: '#F06A8A' },
+  { label: 'Parents', color: '#4C8BF5' },
+  { label: 'Siblings', color: '#31B48D' },
+  { label: 'Spouse', color: '#8B5CF6' },
+  { label: 'Children', color: '#FF7A59' },
+  { label: 'Grandchildren', color: '#35B8C4' },
+  { label: 'Great-Grandchildren', color: '#F6C85F' },
 ];
 
 export function genStyle(g: number) {

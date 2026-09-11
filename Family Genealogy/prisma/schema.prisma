@@ -185,6 +185,10 @@ model PhotoTag {
   photoId       String
   memberId      String
   taggedById    String?
+  // Optional on-photo placement, stored as a percentage (0-100) of the image
+  // area so markers stay aligned across every rendered size.
+  xPosition     Float?
+  yPosition     Float?
   createdAt     DateTime     @default(now())
 
   photo         Photo        @relation(fields: [photoId], references: [id], onDelete: Cascade)

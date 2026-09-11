@@ -85,6 +85,8 @@ export default async function PhotosPage({
   }));
 
   const locationOptions = locations.map((l) => l.location as string);
+  const activeAlbum = albumFilter ? albums.find((a) => a.id === albumFilter) : undefined;
+  const albumContext = activeAlbum ? { name: activeAlbum.name, href: `/photos?album=${activeAlbum.id}`, total } : null;
 
   return (
     <div className="space-y-6">
@@ -146,9 +148,11 @@ export default async function PhotosPage({
             viewMode={searchParams.viewmode === 'list' ? 'list' : 'grid'}
             canDownload={settings.allowPhotoDownload === 'true'}
             canEdit={!!session}
+            isAdmin={session?.role === 'ADMIN'}
             members={memberOptions(members)}
             initialPhotoId={searchParams.photo}
             currentMemberId={session?.memberId}
+            albumContext={albumContext}
           />
         </section>
       )}

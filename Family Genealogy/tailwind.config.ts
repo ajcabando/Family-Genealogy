@@ -15,16 +15,31 @@ const config: Config = {
         sage: '#7a8b6f',
         rust: '#a4583c',
         line: '#e2e8f0',
-        // New sidebar colors
-        navy: '#1e293b',
-        navyLight: '#334155',
-        navyAccent: '#6366f1',
+        // Sidebar / heritage palette
+        navy: '#17182F',
+        navyLight: '#20264A',
+        navyAccent: '#5B4BDB',
+        heritageNavy: '#17182F',
+        heritageDepth: '#20264A',
+        heritageAccent: '#5B4BDB',
+        heritageViolet: '#7C6FF2',
+        heritageTeal: '#00B8A9',
+        heritageGold: '#F6C85F',
+        // Family tree canvas gradient (white -> lavender -> blue)
+        canvasLavender: '#F8F8FF',
+        canvasBlue: '#F1F4FF',
         // Stat card icon backgrounds
         blueSoft: '#eff6ff',
         greenSoft: '#f0fdf4',
         orangeSoft: '#fff7ed',
         purpleSoft: '#faf5ff',
         redSoft: '#fef2f2',
+        // Photo viewer (dark "premium archive" surface)
+        archiveDeep: '#0B0D12',
+        archiveAccent: '#7C5CFC',
+        archiveTeal: '#19C3B1',
+        archiveGold: '#F6C85F',
+        archiveMuted: '#A7A9B4',
         // Branch badge colors
         branchBlue: '#3b82f6',
         branchGreen: '#22c55e',

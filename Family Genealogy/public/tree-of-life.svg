@@ -1,155 +1,110 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <!--
+    Heritage family-tree watermark for the Family Tree canvas.
+    Clean vector line-art (no photograph): roots, trunk, branches, leaves and
+    subtle family nodes. Always rendered at very low opacity behind the nodes.
+  -->
   <defs>
-    <linearGradient id="trunkGrad" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#6ec4a0"/>
-      <stop offset="0.45" stop-color="#8ec96e"/>
-      <stop offset="1" stop-color="#a8d16e"/>
+    <linearGradient id="hl-branch" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0" stop-color="#5B4BDB"/>
+      <stop offset="0.55" stop-color="#7C6FF2"/>
+      <stop offset="1" stop-color="#00B8A9"/>
     </linearGradient>
-    <linearGradient id="branchGrad" x1="0" y1="1" x2="0" y2="0">
-      <stop offset="0" stop-color="#7cc98a"/>
-      <stop offset="0.55" stop-color="#63bfae"/>
-      <stop offset="1" stop-color="#5bb8c4"/>
+    <linearGradient id="hl-trunk" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0" stop-color="#5B4BDB"/>
+      <stop offset="1" stop-color="#7C6FF2"/>
     </linearGradient>
-    <!-- leaf -->
-    <g id="leaf">
-      <path d="M0 0C4-3 8-3 11 0 8 3 4 3 0 0Z"/>
-      <path d="M0 0 11 0" stroke-width="0.7" stroke="rgba(255,255,255,0.55)" fill="none"/>
+    <g id="hl-leaf">
+      <path d="M0 0C3.6-2.7 7.2-2.7 9.8 0 7.2 2.7 3.6 2.7 0 0Z"/>
     </g>
-    <!-- bird -->
-    <g id="bird">
-      <path d="M0 0C3-4 8-5 11-3 9 1 4 3 0 0Z"/>
-      <path d="M3-1C5-5 9-7 13-6 12-2 8 0 3-1Z" opacity="0.85"/>
-    </g>
-    <!-- butterfly -->
-    <g id="butterfly">
-      <ellipse cx="-2.4" cy="-1" rx="2.6" ry="1.7" transform="rotate(-28)"/>
-      <ellipse cx="2.4" cy="-1" rx="2.6" ry="1.7" transform="rotate(28)"/>
-      <path d="M0-2v5" stroke-width="0.8" fill="none"/>
+    <g id="hl-node">
+      <circle r="2.6"/>
     </g>
   </defs>
 
-  <!-- ============ crown branches (teal -> green) ============ -->
-  <g fill="none" stroke="url(#branchGrad)" stroke-linecap="round">
-    <!-- main trunk rising -->
-    <path d="M100 172C99 140 100 112 100 84" stroke-width="5"/>
-    <!-- lower crown -->
-    <path d="M100 108C86 104 74 96 66 84 60 75 58 66 60 56" stroke-width="3.4"/>
-    <path d="M100 108C114 104 126 96 134 84 140 75 142 66 140 56" stroke-width="3.4"/>
-    <!-- mid crown -->
-    <path d="M100 92C88 86 80 78 76 68" stroke-width="3"/>
-    <path d="M100 92C112 86 120 78 124 68" stroke-width="3"/>
-    <path d="M76 68C70 64 66 58 64 50" stroke-width="2.4"/>
-    <path d="M124 68C130 64 134 58 136 50" stroke-width="2.4"/>
-    <!-- upper crown -->
-    <path d="M100 78C94 68 92 58 94 46" stroke-width="3"/>
-    <path d="M100 78C106 68 108 58 106 46" stroke-width="3"/>
-    <path d="M94 46C90 38 90 30 94 22" stroke-width="2.2"/>
-    <path d="M106 46C110 38 110 30 106 22" stroke-width="2.2"/>
-    <!-- curls -->
-    <path d="M66 84C60 82 54 84 50 90" stroke-width="1.6"/>
-    <path d="M134 84C140 82 146 84 150 90" stroke-width="1.6"/>
-    <path d="M60 56C54 50 52 42 56 34" stroke-width="1.4"/>
-    <path d="M140 56C146 50 148 42 144 34" stroke-width="1.4"/>
-    <path d="M76 68C72 60 72 52 76 44" stroke-width="1.4"/>
-    <path d="M124 68C128 60 128 52 124 44" stroke-width="1.4"/>
-    <path d="M94 46C86 44 80 38 78 30" stroke-width="1.4"/>
-    <path d="M106 46C114 44 120 38 122 30" stroke-width="1.4"/>
-    <!-- small twigs -->
-    <path d="M84 96c-4-2-8-2-12 0" stroke-width="1.3"/>
-    <path d="M116 96c4-2 8-2 12 0" stroke-width="1.3"/>
-    <path d="M88 62c-5 0-9-3-11-7" stroke-width="1.2"/>
-    <path d="M112 62c5 0 9-3 11-7" stroke-width="1.2"/>
+  <!-- ============ canopy branches ============ -->
+  <g stroke="url(#hl-branch)" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M100 128C86 122 74 112 66 98 60 88 58 78 60 68" stroke-width="2.8"/>
+    <path d="M100 128C114 122 126 112 134 98 140 88 142 78 140 68" stroke-width="2.8"/>
+    <path d="M100 112C90 106 82 97 78 86 75 78 74 70 75 62" stroke-width="2.2"/>
+    <path d="M100 112C110 106 118 97 122 86 125 78 126 70 125 62" stroke-width="2.2"/>
+    <path d="M100 100C94 92 90 82 90 72 90 64 92 56 95 49" stroke-width="1.8"/>
+    <path d="M100 100C106 92 110 82 110 72 110 64 108 56 105 49" stroke-width="1.8"/>
+    <path d="M100 96C100 86 100 76 100 66 100 58 100 50 100 42" stroke-width="2"/>
+    <path d="M100 66C96 58 95 50 97 42" stroke-width="1.3"/>
+    <path d="M100 66C104 58 105 50 103 42" stroke-width="1.3"/>
+    <!-- fine twigs -->
+    <path d="M66 98C58 96 52 99 48 105" stroke-width="1.1"/>
+    <path d="M134 98C142 96 148 99 152 105" stroke-width="1.1"/>
+    <path d="M60 68C54 62 51 54 53 46" stroke-width="1.1"/>
+    <path d="M140 68C146 62 149 54 147 46" stroke-width="1.1"/>
+    <path d="M78 86C72 80 69 72 71 64" stroke-width="1.1"/>
+    <path d="M122 86C128 80 131 72 129 64" stroke-width="1.1"/>
+    <path d="M90 72C84 66 82 58 85 50" stroke-width="1"/>
+    <path d="M110 72C116 66 118 58 115 50" stroke-width="1"/>
+    <path d="M100 42C92 38 86 32 84 24" stroke-width="1"/>
+    <path d="M100 42C108 38 114 32 116 24" stroke-width="1"/>
+    <path d="M100 116C96 110 93 104 92 96" stroke-width="1.1"/>
+    <path d="M100 116C104 110 107 104 108 96" stroke-width="1.1"/>
   </g>
 
-  <!-- ============ ornate trunk (green) ============ -->
-  <g fill="url(#trunkGrad)" stroke="none">
-    <path d="M92 176C91 156 92 136 94 116 95 106 97 98 100 92 103 98 105 106 106 116 108 136 109 156 108 176 106 178 94 178 92 176Z"/>
-    <!-- flare roots -->
-    <path d="M92 176c-6-2-12-6-16-12 6 0 12 3 16 7Z"/>
-    <path d="M108 176c6-2 12-6 16-12-6 0-12 3-16 7Z"/>
-  </g>
-  <!-- trunk filigree swirls -->
-  <g fill="none" stroke="#ffffff" stroke-width="1.4" stroke-linecap="round" opacity="0.9">
-    <path d="M100 168c-5-2-7-6-6-10s5-5 7-2-1 6-4 5"/>
-    <path d="M100 152c5-2 7-6 6-10s-5-5-7-2 1 6 4 5"/>
-    <path d="M100 138c-4-2-6-5-5-8s4-4 6-2-1 5-3 4"/>
-    <path d="M100 124c4-2 6-5 5-8s-4-4-6-2 1 5 3 4"/>
-    <path d="M96 178c1-4 2-8 2-12M104 178c-1-4-2-8-2-12"/>
+  <!-- ============ trunk ============ -->
+  <path
+    d="M95 192C94 172 96 152 98 134 99 126 100 120 100 114 100 120 101 126 102 134 104 152 106 172 105 192 103 194.5 97 194.5 95 192Z"
+    fill="url(#hl-trunk)"
+  />
+
+  <!-- ============ roots ============ -->
+  <g stroke="url(#hl-trunk)" stroke-linecap="round" fill="none">
+    <path d="M100 191C92 190 84 186 78 179" stroke-width="2"/>
+    <path d="M100 191C108 190 116 186 122 179" stroke-width="2"/>
+    <path d="M100 191C95 188 91 182 89 175" stroke-width="1.5"/>
+    <path d="M100 191C105 188 109 182 111 175" stroke-width="1.5"/>
+    <path d="M78 179C74 175 71 170 70 165" stroke-width="1.1"/>
+    <path d="M122 179C126 175 129 170 130 165" stroke-width="1.1"/>
   </g>
 
-  <!-- ============ leaves (teal upper, green lower) ============ -->
-  <g fill="#5bb8c4">
-    <use href="#leaf" transform="translate(94 22) rotate(-60)"/>
-    <use href="#leaf" transform="translate(106 22) rotate(60)"/>
-    <use href="#leaf" transform="translate(78 30) rotate(-110)"/>
-    <use href="#leaf" transform="translate(122 30) rotate(110)"/>
-    <use href="#leaf" transform="translate(64 50) rotate(-95)"/>
-    <use href="#leaf" transform="translate(136 50) rotate(95)"/>
-    <use href="#leaf" transform="translate(94 46) rotate(-45)"/>
-    <use href="#leaf" transform="translate(106 46) rotate(45)"/>
-    <use href="#leaf" transform="translate(56 34) rotate(-70)"/>
-    <use href="#leaf" transform="translate(144 34) rotate(70)"/>
-    <use href="#leaf" transform="translate(78 44) rotate(-120)"/>
-    <use href="#leaf" transform="translate(122 44) rotate(120)"/>
-    <use href="#leaf" transform="translate(88 62) rotate(-140)"/>
-    <use href="#leaf" transform="translate(112 62) rotate(140)"/>
-    <use href="#leaf" transform="translate(50 90) rotate(170)"/>
-    <use href="#leaf" transform="translate(150 90) rotate(-170)"/>
-    <use href="#leaf" transform="translate(72 68) rotate(-115)"/>
-    <use href="#leaf" transform="translate(128 68) rotate(115)"/>
+  <!-- ============ leaves ============ -->
+  <g fill="#00B8A9">
+    <use href="#hl-leaf" transform="translate(100 42) rotate(-62)"/>
+    <use href="#hl-leaf" transform="translate(100 42) rotate(62)"/>
+    <use href="#hl-leaf" transform="translate(97 42) rotate(-6)"/>
+    <use href="#hl-leaf" transform="translate(84 24) rotate(-104)"/>
+    <use href="#hl-leaf" transform="translate(116 24) rotate(104)"/>
+    <use href="#hl-leaf" transform="translate(85 50) rotate(-96)"/>
+    <use href="#hl-leaf" transform="translate(115 50) rotate(96)"/>
+    <use href="#hl-leaf" transform="translate(71 64) rotate(-112)"/>
+    <use href="#hl-leaf" transform="translate(129 64) rotate(112)"/>
   </g>
-  <g fill="#63bfae">
-    <use href="#leaf" transform="translate(60 56) rotate(-80)"/>
-    <use href="#leaf" transform="translate(140 56) rotate(80)"/>
-    <use href="#leaf" transform="translate(76 44) rotate(-100)"/>
-    <use href="#leaf" transform="translate(124 44) rotate(100)"/>
-    <use href="#leaf" transform="translate(84 96) rotate(-160)"/>
-    <use href="#leaf" transform="translate(116 96) rotate(160)"/>
-    <use href="#leaf" transform="translate(66 84) rotate(-160)"/>
-    <use href="#leaf" transform="translate(134 84) rotate(160)"/>
+  <g fill="#7C6FF2">
+    <use href="#hl-leaf" transform="translate(53 46) rotate(-72)"/>
+    <use href="#hl-leaf" transform="translate(147 46) rotate(72)"/>
+    <use href="#hl-leaf" transform="translate(48 105) rotate(168)"/>
+    <use href="#hl-leaf" transform="translate(152 105) rotate(-168)"/>
+    <use href="#hl-leaf" transform="translate(75 62) rotate(-118)"/>
+    <use href="#hl-leaf" transform="translate(125 62) rotate(118)"/>
   </g>
-  <g fill="#7cc98a">
-    <use href="#leaf" transform="translate(76 68) rotate(-105)"/>
-    <use href="#leaf" transform="translate(124 68) rotate(105)"/>
-    <use href="#leaf" transform="translate(84 96) rotate(150)"/>
-    <use href="#leaf" transform="translate(116 96) rotate(-150)"/>
-  </g>
-  <g fill="#8ec96e">
-    <use href="#leaf" transform="translate(60 84) rotate(-170)"/>
-    <use href="#leaf" transform="translate(140 84) rotate(170)"/>
-    <use href="#leaf" transform="translate(70 96) rotate(-140)"/>
-    <use href="#leaf" transform="translate(130 96) rotate(140)"/>
-    <use href="#leaf" transform="translate(52 70) rotate(-85)"/>
-    <use href="#leaf" transform="translate(148 70) rotate(85)"/>
-  </g>
-  <g fill="#a8d16e">
-    <use href="#leaf" transform="translate(56 96) rotate(-160)"/>
-    <use href="#leaf" transform="translate(144 96) rotate(160)"/>
-    <use href="#leaf" transform="translate(66 104) rotate(-120)"/>
-    <use href="#leaf" transform="translate(134 104) rotate(120)"/>
-    <use href="#leaf" transform="translate(46 84) rotate(-90)"/>
-    <use href="#leaf" transform="translate(154 84) rotate(90)"/>
+  <g fill="#F6C85F">
+    <use href="#hl-leaf" transform="translate(60 68) rotate(-92)"/>
+    <use href="#hl-leaf" transform="translate(140 68) rotate(92)"/>
+    <use href="#hl-leaf" transform="translate(66 98) rotate(-158)"/>
+    <use href="#hl-leaf" transform="translate(134 98) rotate(158)"/>
+    <use href="#hl-leaf" transform="translate(92 96) rotate(-140)"/>
+    <use href="#hl-leaf" transform="translate(108 96) rotate(140)"/>
   </g>
 
-  <!-- ============ birds ============ -->
-  <g fill="#b3a3d6">
-    <use href="#bird" transform="translate(96 6) scale(0.9)"/>
+  <!-- ============ subtle family nodes ============ -->
+  <g stroke="#5B4BDB" stroke-width="1" fill="none">
+    <path d="M100 36.6 86 46"/>
+    <path d="M100 36.6 114 46"/>
+    <path d="M84 50.4 74 60"/>
+    <path d="M116 50.4 126 60"/>
   </g>
-  <g fill="#9d8bc8">
-    <use href="#bird" transform="translate(64 16) scale(0.75) rotate(-8)"/>
-  </g>
-
-  <!-- ============ butterflies ============ -->
-  <g fill="#f0a8b8">
-    <use href="#butterfly" transform="translate(30 44) scale(0.8) rotate(-12)"/>
-  </g>
-  <g fill="#f6c66e">
-    <use href="#butterfly" transform="translate(158 78) scale(0.7) rotate(14)"/>
-  </g>
-  <g fill="#f2b3c0">
-    <use href="#butterfly" transform="translate(18 98) scale(0.65) rotate(8)"/>
-  </g>
-  <g fill="#f6c66e">
-    <use href="#butterfly" transform="translate(84 128) scale(0.6) rotate(-10)"/>
+  <g fill="#5B4BDB">
+    <use href="#hl-node" transform="translate(100 34)"/>
+    <use href="#hl-node" transform="translate(84 48)"/>
+    <use href="#hl-node" transform="translate(116 48)"/>
+    <use href="#hl-node" transform="translate(72 62)"/>
+    <use href="#hl-node" transform="translate(128 62)"/>
   </g>
 </svg>

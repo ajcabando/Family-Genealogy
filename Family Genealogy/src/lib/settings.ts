@@ -21,6 +21,9 @@ export const SETTING_DEFAULTS: Record<string, string> = {
   treeHeroBackground: '',
   treeHeroBackgroundOpacity: '60',
   treeHeroBackgroundPosY: '50',
+  sidebarBackground: '',
+  sidebarBackgroundOpacity: '50',
+  sidebarBackgroundPosY: '50',
 };
 
 export async function getSettings(): Promise<Record<string, string>> {

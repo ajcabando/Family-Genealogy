@@ -26,6 +26,7 @@ export function SettingsForm({ settings, familyName }: { settings: Record<string
   const heroInputDashboard = useRef<HTMLInputElement>(null);
   const heroInputPhotos = useRef<HTMLInputElement>(null);
   const heroInputTree = useRef<HTMLInputElement>(null);
+  const heroInputSidebar = useRef<HTMLInputElement>(null);
 
   async function save() {
     setSaving(true);
@@ -104,6 +105,7 @@ export function SettingsForm({ settings, familyName }: { settings: Record<string
     { key: 'heroBackground', opacityKey: 'heroBackgroundOpacity', posYKey: 'heroBackgroundPosY', title: 'Dashboard Hero', desc: 'Background image for the main dashboard banner.', inputRef: heroInputDashboard },
     { key: 'photosHeroBackground', opacityKey: 'photosHeroBackgroundOpacity', posYKey: 'photosHeroBackgroundPosY', title: 'Photos Hero', desc: 'Background image for the photos gallery banner.', inputRef: heroInputPhotos },
     { key: 'treeHeroBackground', opacityKey: 'treeHeroBackgroundOpacity', posYKey: 'treeHeroBackgroundPosY', title: 'Family Tree Hero', desc: 'Background image for the family tree banner.', inputRef: heroInputTree },
+    { key: 'sidebarBackground', opacityKey: 'sidebarBackgroundOpacity', posYKey: 'sidebarBackgroundPosY', title: 'Sidebar', desc: 'Background image for the desktop navigation sidebar (replaces the default tree watermark).', inputRef: heroInputSidebar },
   ];
 
   return (
@@ -118,8 +120,8 @@ export function SettingsForm({ settings, familyName }: { settings: Record<string
       </div>
 
       <div className="card p-5">
-        <h2 className="mb-4 font-display text-lg font-bold text-ink">Hero Backgrounds</h2>
-        <p className="mb-4 text-sm text-inkSoft">Customize the background image and opacity for each page&apos;s hero banner. If no image is set, a default background is used.</p>
+        <h2 className="mb-4 font-display text-lg font-bold text-ink">Background Images</h2>
+        <p className="mb-4 text-sm text-inkSoft">Customize the background image and opacity for each page&apos;s hero banner and the desktop sidebar. If no image is set, a default background is used.</p>
         <div className="space-y-5">
           {heroSections.map((section) => {
             const bgValue = values[section.key] || '';

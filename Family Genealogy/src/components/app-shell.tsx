@@ -38,11 +38,29 @@ function isActive(pathname: string, href: string) {
   return pathname === href || (href !== '/' && pathname.startsWith(href));
 }
 
-export function AppShell({ session, familyName, children }: { session: Session | null; familyName: string; children: React.ReactNode }) {
+export function AppShell({
+  session,
+  familyName,
+  sidebarBackground,
+  sidebarOpacity,
+  sidebarPosY,
+  children,
+}: {
+  session: Session | null;
+  familyName: string;
+  sidebarBackground?: string;
+  sidebarOpacity?: string;
+  sidebarPosY?: string;
+  children: React.ReactNode;
+}) {
   const pathname = usePathname();
   const router = useRouter();
   const isAdmin = session?.role === 'ADMIN';
   const [moreOpen, setMoreOpen] = useState(false);
+
+  const sidebarImage = sidebarBackground ? `/api/files/${sidebarBackground}` : '';
+  const sidebarImageOpacity = Math.min(100, Math.max(10, parseInt(sidebarOpacity || '50', 10))) / 100;
+  const sidebarImagePosY = Math.min(100, Math.max(0, parseInt(sidebarPosY || '50', 10)));
 
   const moreItems = [
     { href: '/', label: 'Dashboard', icon: 'home' },
@@ -66,15 +84,40 @@ export function AppShell({ session, familyName, children }: { session: Session |
   return (
     <div className="min-h-screen">
       {/* ---------- Desktop sidebar ---------- */}
-      <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col overflow-hidden bg-navy lg:flex">
-        {/* Decorative tree watermark */}
+      <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col overflow-hidden bg-heritageNavy lg:flex">
+        {/* Heritage depth wash — deepest at the base, where the roots are */}
         <div
-          aria-hidden
-          className="pointer-events-none absolute inset-x-0 top-1/2 h-[420px] -translate-y-1/2 bg-no-repeat"
-          style={{ backgroundImage: "url('/tree-of-life-dark.svg')", backgroundSize: '380px', backgroundPosition: 'center', opacity: 0.07 }}
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 bg-gradient-to-b from-heritageNavy via-heritageNavy to-heritageDepth"
         />
+
+        {/* Family-tree silhouette anchored to the bottom of the sidebar */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-[58%] bg-no-repeat"
+          style={{ backgroundImage: "url('/tree-of-life-dark.svg')", backgroundSize: '300px', backgroundPosition: 'center bottom', opacity: 0.08 }}
+        />
+
+        {/* Optional background photo (admin-configurable) */}
+        {sidebarImage && (
+          <>
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0 bg-cover"
+              style={{
+                backgroundImage: `url('${sidebarImage}')`,
+                backgroundPositionY: `${sidebarImagePosY}%`,
+                opacity: sidebarImageOpacity,
+              }}
+            />
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0 bg-gradient-to-b from-heritageNavy/90 via-heritageNavy/75 to-heritageDepth/70"
+            />
+          </>
+        )}
         <Link href="/" className="relative flex items-center gap-3 px-5 py-6">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-navyLight text-white ring-2 ring-white/10">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-heritageAccent text-white ring-2 ring-white/10 shadow-[0_8px_20px_-8px_rgba(91,75,219,0.9)]">
             <Icon name="tree" className="h-7 w-7" />
           </div>
           <div className="leading-tight">
@@ -91,13 +134,15 @@ export function AppShell({ session, familyName, children }: { session: Session |
                 href={item.href}
                 className={cn(
                   'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition',
-                  active ? 'bg-navyAccent text-white' : 'text-white/70 hover:bg-navyLight hover:text-white',
+                  active
+                    ? 'bg-heritageAccent text-white shadow-[0_8px_20px_-10px_rgba(91,75,219,0.95)]'
+                    : 'text-white/70 hover:bg-heritageDepth hover:text-white',
                 )}
               >
                 <Icon name={item.icon} className="h-[18px] w-[18px]" />
                 {item.label}
                 {item.href === '/notifications' && session && (
-                  <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-rust text-[10px] font-bold text-white">
+                  <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-heritageGold text-[10px] font-bold text-heritageNavy">
                     3
                   </span>
                 )}
@@ -109,7 +154,9 @@ export function AppShell({ session, familyName, children }: { session: Session |
               href="/admin"
               className={cn(
                 'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition',
-                isActive(pathname, '/admin') ? 'bg-navyAccent text-white' : 'text-white/70 hover:bg-navyLight hover:text-white',
+                isActive(pathname, '/admin')
+                  ? 'bg-heritageAccent text-white shadow-[0_8px_20px_-10px_rgba(91,75,219,0.95)]'
+                  : 'text-white/70 hover:bg-heritageDepth hover:text-white',
               )}
             >
               <Icon name="shield" className="h-[18px] w-[18px]" />
@@ -123,6 +170,7 @@ export function AppShell({ session, familyName, children }: { session: Session |
               <p className="px-2 font-display text-[13px] italic leading-relaxed text-white/50">
                 &ldquo;Our Family<br />Our Roots<br />Our Tomorrow&rdquo;
               </p>
+              <div aria-hidden="true" className="mx-2 h-px bg-gradient-to-r from-transparent via-heritageGold/40 to-transparent" />
               <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-3 py-2.5">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white font-display text-sm font-bold text-ink">
                   {initial}
@@ -135,7 +183,7 @@ export function AppShell({ session, familyName, children }: { session: Session |
               </div>
               <button 
                 onClick={signOut} 
-                className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-white/70 transition hover:bg-navyLight hover:text-white"
+                className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-white/70 transition hover:bg-heritageDepth hover:text-white"
               >
                 <Icon name="logOut" className="h-4 w-4" />
                 Sign out

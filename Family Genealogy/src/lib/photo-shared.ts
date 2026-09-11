@@ -10,8 +10,11 @@ export type GalleryPhoto = {
   favorite: boolean;
   thumbPath: string;
   optimizedPath: string;
+  width: number | null;
+  height: number | null;
+  uploaderId: string | null;
   uploaderName: string | null;
-  tags: Array<{ id: string; memberId: string; name: string }>;
+  tags: Array<{ id: string; memberId: string; name: string; x: number | null; y: number | null }>;
   comments: Array<{ id: string; body: string; authorId: string; authorName: string; createdAt: string }>;
   createdAt: string;
   approvalStatus: string;
@@ -34,11 +37,16 @@ export function serializePhoto(p: PhotoWithRels): GalleryPhoto {
     favorite: p.favorite,
     thumbPath: p.thumbPath,
     optimizedPath: p.optimizedPath || p.filePath,
+    width: p.width,
+    height: p.height,
+    uploaderId: p.uploadedById,
     uploaderName: p.uploader ? `${p.uploader.firstName} ${p.uploader.lastName}` : null,
     tags: (p.tags || []).map((t) => ({
       id: t.id,
       memberId: t.memberId,
       name: `${t.member.firstName} ${t.member.lastName}`,
+      x: t.xPosition,
+      y: t.yPosition,
     })),
     comments: (p.comments || []).map((c) => ({
       id: c.id,

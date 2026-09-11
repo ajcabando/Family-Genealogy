@@ -20,18 +20,27 @@ export function NotificationsBell() {
   const [unread, setUnread] = useState(0);
   const ref = useRef<HTMLDivElement>(null);
 
-  async function load() {
-    const res = await fetch('/api/notifications?limit=6');
-    if (!res.ok) return;
-    const data = await res.json();
-    setItems(data.items || []);
-    setUnread(data.unread || 0);
+  async function load(signal?: AbortSignal) {
+    try {
+      const res = await fetch('/api/notifications?limit=6', { signal });
+      if (!res.ok) return;
+      const data = await res.json();
+      setItems(data.items || []);
+      setUnread(data.unread || 0);
+    } catch {
+      // A background poll must never surface as an unhandled error: the request can fail
+      // while the dev server restarts, while offline, or when the component unmounts.
+    }
   }
 
   useEffect(() => {
-    load();
-    const id = setInterval(load, 60_000);
-    return () => clearInterval(id);
+    const controller = new AbortController();
+    void load(controller.signal);
+    const id = setInterval(() => void load(controller.signal), 60_000);
+    return () => {
+      controller.abort();
+      clearInterval(id);
+    };
   }, []);
 
   useEffect(() => {
@@ -43,7 +52,11 @@ export function NotificationsBell() {
   }, []);
 
   async function markAllRead() {
-    await fetch('/api/notifications/read', { method: 'POST' });
+    try {
+      await fetch('/api/notifications/read', { method: 'POST' });
+    } catch {
+      return;
+    }
     setUnread(0);
     setItems((prev) => prev.map((n) => ({ ...n, readAt: new Date().toISOString() })));
   }
@@ -53,7 +66,7 @@ export function NotificationsBell() {
       <button
         onClick={() => {
           setOpen((o) => !o);
-          if (!open) load();
+          if (!open) void load();
         }}
         className="relative flex h-10 w-10 items-center justify-center rounded-xl text-inkSoft transition hover:bg-parchment hover:text-goldDeep"
         aria-label="Notifications"

@@ -4,7 +4,7 @@ import { apiAuth } from '@/lib/api-helpers';
 import { setSetting } from '@/lib/settings';
 import { audit } from '@/lib/audit';
 
-const VALID_HERO_KEYS = ['heroBackground', 'photosHeroBackground', 'treeHeroBackground'];
+const VALID_HERO_KEYS = ['heroBackground', 'photosHeroBackground', 'treeHeroBackground', 'sidebarBackground'];
 
 export async function POST(req: NextRequest) {
   const auth = await apiAuth(req, { admin: true });

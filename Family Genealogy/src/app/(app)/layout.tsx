@@ -12,6 +12,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     <AppShell
       session={session ? { name: session.name, email: session.email, role: session.role } : null}
       familyName={settings.familyName || 'Family'}
+      sidebarBackground={settings.sidebarBackground}
+      sidebarOpacity={settings.sidebarBackgroundOpacity}
+      sidebarPosY={settings.sidebarBackgroundPosY}
     >
       {children}
     </AppShell>

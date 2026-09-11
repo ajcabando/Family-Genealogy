@@ -10,6 +10,8 @@ import type { TreePerson } from '@/lib/genealogy';
 export type FamilyCardData = {
   person: TreePerson;
   selected: boolean;
+  /** True while someone else is selected — this card is not directly related. */
+  dimmed?: boolean;
   hasChildren: boolean;
   collapsed: boolean;
   showGen?: boolean;
@@ -21,17 +23,33 @@ export type FamilyCardData = {
 
 export type FamilyCardNodeType = Node<FamilyCardData, 'familyCard'>;
 
+const GENDER_GLYPH: Record<string, { glyph: string; color: string; label: string }> = {
+  MALE: { glyph: '♂', color: '#4C8BF5', label: 'Male' },
+  FEMALE: { glyph: '♀', color: '#F06A8A', label: 'Female' },
+};
+
 function FamilyCardNodeInner({ data }: NodeProps<FamilyCardNodeType>) {
-  const { person, selected, hasChildren, collapsed, showGen, showBranch, branchColor } = data;
+  const { person, selected, dimmed, hasChildren, collapsed, showGen, showBranch, branchColor } = data;
   const gen = genStyle(person.generation);
+  const gender = GENDER_GLYPH[person.gender];
+
+  // Branch colour wins while that view is on; otherwise the generation accent.
+  const tint = showBranch && branchColor ? branchColor : gen.color;
 
   return (
     <div
       className={cn(
         'group relative flex flex-col items-center rounded-2xl border bg-white px-2 pb-2 pt-3 text-center shadow-card transition-all duration-200 select-none',
-        selected ? 'border-navyAccent ring-2 ring-navyAccent/40 shadow-lift' : 'border-line hover:border-navyAccent/40 hover:shadow-lift',
+        selected ? 'z-10 scale-[1.03] shadow-lift' : 'hover:-translate-y-0.5 hover:shadow-lift',
+        dimmed && 'opacity-40 saturate-50',
       )}
-      style={{ width: NODE_W, height: NODE_H, cursor: 'pointer', ...(showBranch && branchColor ? { borderColor: branchColor, boxShadow: `0 0 0 1px ${branchColor}55` } : {}) }}
+      style={{
+        width: NODE_W,
+        height: NODE_H,
+        cursor: 'pointer',
+        borderColor: selected ? tint : `${tint}59`,
+        ...(selected ? { boxShadow: `0 0 0 3px ${tint}33, 0 16px 32px -16px ${tint}` } : {}),
+      }}
       onClick={(e) => {
         e.stopPropagation();
         data.onSelect(person.id);
@@ -57,11 +75,19 @@ function FamilyCardNodeInner({ data }: NodeProps<FamilyCardNodeType>) {
         <img
           src={person.thumbUrl}
           alt={person.firstName}
-          className={cn('h-16 w-16 rounded-full border-2 object-cover', person.deceased ? 'border-line grayscale' : 'border-navyAccent/40')}
+          className={cn(
+            'h-16 w-16 rounded-full border-2 object-cover transition',
+            person.deceased ? 'border-line grayscale' : '',
+            !person.deceased && !selected ? 'border-navyAccent/30 group-hover:border-navyAccent/60' : '',
+          )}
+          style={!person.deceased && selected ? { borderColor: tint } : undefined}
           draggable={false}
         />
       ) : (
-        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-navyAccent/10 font-display text-lg font-bold text-navyAccent">
+        <div
+          className="flex h-16 w-16 items-center justify-center rounded-full font-display text-lg font-bold"
+          style={{ background: `${tint}1f`, color: tint }}
+        >
           {(person.firstName || '?')[0]}
         </div>
       )}
@@ -69,9 +95,16 @@ function FamilyCardNodeInner({ data }: NodeProps<FamilyCardNodeType>) {
       <p className="mt-1.5 line-clamp-2 font-display text-[13px] font-bold leading-tight text-ink">
         {person.firstName} {person.lastName}
       </p>
-      <p className={cn('mt-0.5 text-[11px] leading-tight', person.deceased ? 'text-inkSoft/70' : 'text-sage')}>
-        {yearsRange(person.birthYear ? new Date(person.birthYear, 0).toISOString() : null, person.deathYear ? new Date(person.deathYear, 0).toISOString() : null)}
-        {!person.deceased && !person.birthYear ? 'living' : ''}
+      <p className={cn('mt-0.5 flex items-center justify-center gap-1 text-[11px] leading-tight', person.deceased ? 'text-inkSoft/70' : 'text-sage')}>
+        <span>
+          {yearsRange(person.birthYear ? new Date(person.birthYear, 0).toISOString() : null, person.deathYear ? new Date(person.deathYear, 0).toISOString() : null)}
+          {!person.deceased && !person.birthYear ? 'living' : ''}
+        </span>
+        {gender && (
+          <span aria-label={gender.label} title={gender.label} style={{ color: gender.color }} className="text-[12px] font-bold leading-none">
+            {gender.glyph}
+          </span>
+        )}
       </p>
 
       {person.branch && (

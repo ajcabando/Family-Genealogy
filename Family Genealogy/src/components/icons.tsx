@@ -43,6 +43,15 @@ const PATHS: Record<string, string> = {
   refresh: 'M20 12a8 8 0 11-2.34-5.66M20 4v4h-4',
   sun: 'M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M18.4 5.6L17 7M7 17l-1.4 1.4M12 8a4 4 0 100 8 4 4 0 000-8z',
   logOut: 'M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4M10 17l5-5-5-5M15 12H3',
+  arrowLeft: 'M19 12H5M12 19l-7-7 7-7',
+  chevronUp: 'M5 15l7-7 7 7',
+  chevronDown: 'M5 9l7 7 7-7',
+  info: 'M12 21a9 9 0 100-18 9 9 0 000 18zM12 16v-4M12 8h.01',
+  messageCircle: 'M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z',
+  tag: 'M20.6 13.4L11 3.8V3H3v8h.8l9.6 9.6a2 2 0 002.8 0l4.4-4.4a2 2 0 000-2.8zM7 7h.01',
+  fullscreenExit: 'M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5',
+  zoomOut: 'M11 18a7 7 0 100-14 7 7 0 000 14zM21 21l-4.35-4.35M8 11h6',
+  flag: 'M5 21V4h10l1 3h3v9h-6l-1-3H5',
 };
 
 export function Icon({ name, className }: { name: string; className?: string }) {

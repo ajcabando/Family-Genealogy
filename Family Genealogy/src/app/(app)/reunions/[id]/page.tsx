@@ -79,8 +79,10 @@ export default async function ReunionDetailPage({ params, searchParams }: { para
           albumId={album.id}
           canDownload={settings.allowPhotoDownload === 'true'}
           canEdit={!!session}
+          isAdmin={isAdmin}
           members={memberOptions(members)}
           currentMemberId={session?.memberId}
+          albumContext={{ name: album.name, href: `/reunions/${reunion.id}?album=${album.id}`, total }}
         />
       </div>
     );

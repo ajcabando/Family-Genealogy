@@ -13,11 +13,12 @@ import type { DrawerRel } from './profile-drawer';
 import { Icon } from '../icons';
 import { cn, fullName } from '@/lib/utils';
 
+// Soft, heritage-toned relationship lines (never thick black strokes).
 const EDGE_STYLES: Record<TreeEdgeKind, { stroke: string; width: number; type: 'smoothstep' | 'straight'; dash?: string; label?: string }> = {
-  parent: { stroke: '#8a6d38', width: 2, type: 'smoothstep' },
-  spouse: { stroke: '#b08d4f', width: 1.5, type: 'straight' },
-  adopted: { stroke: '#7a8b6f', width: 2, type: 'smoothstep', dash: '7 5', label: 'adopted' },
-  step: { stroke: '#a4583c', width: 2, type: 'smoothstep', dash: '3 5', label: 'step' },
+  parent: { stroke: '#7D8AA8', width: 2, type: 'smoothstep' },
+  spouse: { stroke: '#B9A9EC', width: 1.5, type: 'straight' },
+  adopted: { stroke: '#31B48D', width: 2, type: 'smoothstep', dash: '7 5', label: 'adopted' },
+  step: { stroke: '#FF7A59', width: 2, type: 'smoothstep', dash: '3 5', label: 'step' },
 };
 
 type FocusGroup = 'parents' | 'siblings' | 'spouse' | 'children';
@@ -142,6 +143,18 @@ function TreeInner({ members, relationships, focusId }: Props) {
     return rows;
   }, [layout]);
 
+  // Everyone directly related to the selected person — used to fade the rest.
+  const neighborIds = useMemo(() => {
+    if (!selectedId) return null;
+    const keep = new Set<string>([selectedId]);
+    const add = (ids?: string[]) => (ids || []).forEach((i) => keep.add(i));
+    add(layout.parents.get(selectedId));
+    add(layout.children.get(selectedId));
+    add(layout.spouses.get(selectedId));
+    add(layout.siblings.get(selectedId));
+    return keep;
+  }, [selectedId, layout]);
+
   const nodes: Node[] = useMemo(
     () => [
       ...[...layout.positions.entries()].map(([id, pos]) => {
@@ -155,6 +168,7 @@ function TreeInner({ members, relationships, focusId }: Props) {
           data: {
             person,
             selected: id === selectedId,
+            dimmed: !!neighborIds && !neighborIds.has(id),
             hasChildren: (layout.children.get(id) || []).length > 0,
             collapsed: collapsed.has(id),
             showGen,
@@ -193,19 +207,28 @@ function TreeInner({ members, relationships, focusId }: Props) {
       }),
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [layout, selectedId, collapsed, showGen, showBranches],
+    [layout, selectedId, neighborIds, collapsed, showGen, showBranches],
   );
 
   const edges: Edge[] = useMemo(
     () =>
       layout.edges.map((e) => {
         const s = EDGE_STYLES[e.kind];
+        // Highlight the selected person's own relationships, fade the rest.
+        const connected = !!selectedId && (e.from === selectedId || e.to === selectedId);
+        const dimmed = !!selectedId && !connected;
         return {
           id: e.id,
           source: e.from,
           target: e.to,
           type: s.type,
-          style: { stroke: s.stroke, strokeWidth: s.width, strokeDasharray: s.dash, opacity: 0.9 },
+          zIndex: connected ? 1 : 0,
+          style: {
+            stroke: s.stroke,
+            strokeWidth: connected ? s.width + 1 : s.width,
+            strokeDasharray: s.dash,
+            opacity: dimmed ? 0.16 : connected ? 1 : 0.9,
+          },
           ...(e.kind === 'spouse' ? { sourceHandle: 'r', targetHandle: 'l' } : {}),
           ...(s.label
             ? {
@@ -218,7 +241,7 @@ function TreeInner({ members, relationships, focusId }: Props) {
             : {}),
         };
       }),
-    [layout],
+    [layout, selectedId],
   );
 
   const enterFocus = useCallback((id: string) => {
@@ -473,12 +496,21 @@ function TreeInner({ members, relationships, focusId }: Props) {
           </ul>
         </div>
       ) : (
-        <div ref={canvasRef} className="relative h-[calc(100dvh-22rem)] min-h-[480px] w-full overflow-hidden rounded-2xl border border-line/60 bg-[#fdfbf6] shadow-card lg:h-[calc(100dvh-22rem)]">
-          {/* Decorative tree watermark behind the nodes */}
+        <div
+          ref={canvasRef}
+          className="relative h-[calc(100dvh-22rem)] min-h-[480px] w-full overflow-hidden rounded-2xl border border-line/60 bg-gradient-to-br from-white via-canvasLavender to-canvasBlue shadow-card lg:h-[calc(100dvh-22rem)]"
+        >
+          {/* Large heritage tree watermark behind the nodes (desktop/tablet) */}
           <div
-            aria-hidden
-            className="pointer-events-none absolute inset-0 z-0 bg-no-repeat"
-            style={{ backgroundImage: "url('/tree-of-life.svg')", backgroundSize: '460px', backgroundPosition: 'center 55%', opacity: 0.07 }}
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 z-0 hidden bg-no-repeat sm:block"
+            style={{ backgroundImage: "url('/tree-of-life.svg')", backgroundSize: '74%', backgroundPosition: 'center center', opacity: 0.04 }}
+          />
+          {/* Even more subtle on phones so it never competes with touch targets */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 z-0 bg-no-repeat sm:hidden"
+            style={{ backgroundImage: "url('/tree-of-life.svg')", backgroundSize: '76%', backgroundPosition: 'center center', opacity: 0.02 }}
           />
           <ReactFlow
             nodes={nodes}
@@ -502,7 +534,7 @@ function TreeInner({ members, relationships, focusId }: Props) {
             onPaneClick={() => setSelectedId(null)}
             className="rounded-2xl"
           >
-            <Background variant={BackgroundVariant.Dots} gap={22} size={1.2} color="#d9cdb4" />
+            <Background variant={BackgroundVariant.Dots} gap={22} size={1.2} color="rgba(91, 75, 219, 0.05)" />
             <MiniMap
               position="bottom-left"
               pannable

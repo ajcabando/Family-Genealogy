@@ -65,7 +65,7 @@ export default async function TreePage({ searchParams }: { searchParams: { focus
       <div
         aria-hidden
         className="pointer-events-none fixed inset-0 top-16 bottom-0 left-0 lg:left-64 z-0 bg-repeat"
-        style={{ backgroundImage: "url('/tree-of-life.svg')", backgroundSize: '300px', opacity: 0.07 }}
+        style={{ backgroundImage: "url('/tree-of-life.svg')", backgroundSize: '440px', opacity: 0.05 }}
       />
 
       {/* Hero banner */}
