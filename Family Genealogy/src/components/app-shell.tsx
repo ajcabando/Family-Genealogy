@@ -66,17 +66,23 @@ export function AppShell({ session, familyName, children }: { session: Session |
   return (
     <div className="min-h-screen">
       {/* ---------- Desktop sidebar ---------- */}
-      <aside className="fixed inset-y-0 left-0 z-40 hidden w-60 flex-col border-r border-line/60 bg-white/70 backdrop-blur lg:flex">
-        <Link href="/" className="flex items-center gap-3 px-5 py-5">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-goldDeep text-white shadow-card">
-            <Icon name="tree" className="h-5 w-5" />
+      <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col overflow-hidden bg-navy lg:flex">
+        {/* Decorative tree watermark */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 top-1/2 h-[420px] -translate-y-1/2 bg-no-repeat"
+          style={{ backgroundImage: "url('/tree-of-life-dark.svg')", backgroundSize: '380px', backgroundPosition: 'center', opacity: 0.07 }}
+        />
+        <Link href="/" className="relative flex items-center gap-3 px-5 py-6">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-navyLight text-white ring-2 ring-white/10">
+            <Icon name="tree" className="h-7 w-7" />
           </div>
           <div className="leading-tight">
-            <p className="font-display text-base font-bold text-ink">{familyName}</p>
-            <p className="text-[11px] uppercase tracking-widest text-inkSoft/70">Family Archive</p>
+            <p className="font-display text-xl font-bold text-white">{familyName}</p>
+            <p className="text-[11px] uppercase tracking-widest text-white/60">Family Archive</p>
           </div>
         </Link>
-        <nav className="flex-1 space-y-0.5 overflow-y-auto px-3 py-2">
+        <nav className="relative flex-1 space-y-1 overflow-y-auto px-3 py-2">
           {NAV.map((item) => {
             const active = isActive(pathname, item.href);
             return (
@@ -85,11 +91,16 @@ export function AppShell({ session, familyName, children }: { session: Session |
                 href={item.href}
                 className={cn(
                   'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition',
-                  active ? 'bg-goldDeep text-white shadow-card' : 'text-inkSoft hover:bg-parchment hover:text-goldDeep',
+                  active ? 'bg-navyAccent text-white' : 'text-white/70 hover:bg-navyLight hover:text-white',
                 )}
               >
                 <Icon name={item.icon} className="h-[18px] w-[18px]" />
                 {item.label}
+                {item.href === '/notifications' && session && (
+                  <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-rust text-[10px] font-bold text-white">
+                    3
+                  </span>
+                )}
               </Link>
             );
           })}
@@ -98,7 +109,7 @@ export function AppShell({ session, familyName, children }: { session: Session |
               href="/admin"
               className={cn(
                 'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition',
-                isActive(pathname, '/admin') ? 'bg-goldDeep text-white shadow-card' : 'text-inkSoft hover:bg-parchment hover:text-goldDeep',
+                isActive(pathname, '/admin') ? 'bg-navyAccent text-white' : 'text-white/70 hover:bg-navyLight hover:text-white',
               )}
             >
               <Icon name="shield" className="h-[18px] w-[18px]" />
@@ -106,24 +117,36 @@ export function AppShell({ session, familyName, children }: { session: Session |
             </Link>
           )}
         </nav>
-        <div className="border-t border-line/60 p-4">
+        <div className="relative border-t border-white/10 p-4">
           {session ? (
-            <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gold/20 font-display text-sm font-bold text-goldDeep">{initial}</div>
-              <div className="min-w-0 flex-1 leading-tight">
-                <p className="truncate text-sm font-semibold">{displayName}</p>
-                <p className="text-[11px] text-inkSoft/70">{isAdmin ? 'Administrator' : 'Family Member'}</p>
+            <div className="space-y-3">
+              <p className="px-2 font-display text-[13px] italic leading-relaxed text-white/50">
+                &ldquo;Our Family<br />Our Roots<br />Our Tomorrow&rdquo;
+              </p>
+              <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-3 py-2.5">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white font-display text-sm font-bold text-ink">
+                  {initial}
+                </div>
+                <div className="min-w-0 flex-1 leading-tight">
+                  <p className="truncate text-sm font-semibold text-white">{displayName}</p>
+                  <p className="text-[11px] text-white/60">{isAdmin ? 'Administrator' : 'Family Member'}</p>
+                </div>
+                <Icon name="chevronRight" className="h-4 w-4 shrink-0 text-white/40" />
               </div>
-              <button onClick={signOut} title="Sign out" className="text-inkSoft transition hover:text-rust">
-                <Icon name="x" className="h-4 w-4 rotate-45" />
+              <button 
+                onClick={signOut} 
+                className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-white/70 transition hover:bg-navyLight hover:text-white"
+              >
+                <Icon name="logOut" className="h-4 w-4" />
+                Sign out
               </button>
             </div>
           ) : (
             <div className="space-y-2">
-              <p className="text-xs text-inkSoft/80">Viewing as guest — sign in to contribute to the archive.</p>
+              <p className="text-xs text-white/60">Viewing as guest — sign in to contribute to the archive.</p>
               <div className="flex gap-2">
                 <Link href="/login" className="btn-gold flex-1 px-3 text-xs">Sign in</Link>
-                <Link href="/register" className="btn-ghost flex-1 px-3 text-xs">Request access</Link>
+                <Link href="/register" className="btn-ghost flex-1 px-3 text-xs border-white/20 text-white hover:bg-white/10">Request access</Link>
               </div>
             </div>
           )}
@@ -166,31 +189,52 @@ export function AppShell({ session, familyName, children }: { session: Session |
       </header>
 
       {/* ---------- Desktop top bar ---------- */}
-      <div className="fixed right-0 top-0 z-30 hidden h-16 w-[calc(100%-15rem)] items-center justify-end gap-2 border-b border-line/60 bg-cream/80 px-6 backdrop-blur lg:flex">
-        {session ? (
-          <>
-            <Link
-              href="/family"
-              className="flex h-10 w-10 items-center justify-center rounded-xl text-inkSoft transition hover:bg-parchment hover:text-goldDeep"
-              title="Search family"
-            >
-              <Icon name="search" />
-            </Link>
-            <NotificationsBell />
-            <Link href="/contributions" className="flex h-10 w-10 items-center justify-center rounded-xl text-inkSoft transition hover:bg-parchment hover:text-goldDeep" title="My contributions">
-              <Icon name="inbox" />
-            </Link>
-          </>
-        ) : (
-          <div className="flex items-center gap-2">
-            <Link href="/register" className="btn-ghost px-3 text-xs">Request access</Link>
-            <Link href="/login" className="btn-gold px-4 text-xs">Sign in</Link>
+      <div className="fixed right-0 top-0 z-30 hidden h-16 w-[calc(100%-16rem)] items-center justify-between border-b border-line/60 bg-white/80 px-6 backdrop-blur lg:flex">
+        {/* Search bar */}
+        <div className="flex-1 max-w-xl">
+          <div className="relative">
+            <Icon name="search" className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-inkSoft/60" />
+            <input
+              type="text"
+              placeholder="Search family members, photos, events..."
+              className="w-full rounded-xl border border-line bg-parchment/50 py-2.5 pl-10 pr-16 text-sm text-ink placeholder:text-inkSoft/60 outline-none transition focus:border-navyAccent focus:bg-white focus:ring-2 focus:ring-navyAccent/20"
+            />
+            <kbd className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md border border-line bg-white px-2 py-0.5 text-[10px] font-semibold text-inkSoft/60">
+              Ctrl K
+            </kbd>
           </div>
-        )}
+        </div>
+
+        {/* Right side actions */}
+        <div className="flex items-center gap-2 ml-4">
+          {session ? (
+            <>
+              <button
+                className="flex h-10 w-10 items-center justify-center rounded-xl text-inkSoft transition hover:bg-parchment hover:text-navyAccent"
+                title="Toggle theme"
+              >
+                <Icon name="sun" className="h-5 w-5" />
+              </button>
+              <NotificationsBell />
+              <Link 
+                href="/profile"
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-navy font-display text-sm font-bold text-white ml-2"
+                aria-label="My profile"
+              >
+                {initial}
+              </Link>
+            </>
+          ) : (
+            <div className="flex items-center gap-2">
+              <Link href="/register" className="btn-ghost px-3 text-xs">Request access</Link>
+              <Link href="/login" className="btn-gold px-4 text-xs">Sign in</Link>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* ---------- Content (rendered once, shared by all breakpoints) ---------- */}
-      <div className="lg:pl-60 lg:pt-16">
+      <div className="lg:pl-64 lg:pt-16">
         <main className="px-4 pb-24 pt-4 sm:px-6 lg:px-8 lg:pb-6 lg:pt-6">{children}</main>
       </div>
 
