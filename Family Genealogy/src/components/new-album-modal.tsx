@@ -16,16 +16,22 @@ export function NewAlbumModal({ reunionId }: { reunionId: string }) {
     e.preventDefault();
     setError('');
     setSending(true);
-    const res = await fetch(`/api/reunions/${reunionId}/albums`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, description }),
-    });
-    setSending(false);
-    if (!res.ok) {
-      const d = await res.json();
-      setError(d.error || 'Could not create album');
+    try {
+      const res = await fetch(`/api/reunions/${reunionId}/albums`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, description }),
+      });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        setError(d.error || 'Could not create album');
+        return;
+      }
+    } catch {
+      setError('Network error — please try again.');
       return;
+    } finally {
+      setSending(false);
     }
     setOpen(false);
     setName('');

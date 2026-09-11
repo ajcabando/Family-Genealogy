@@ -45,6 +45,8 @@ export function HeroPhotoPicker({
         setPhotos((prev) => (p === 1 ? data.photos : [...prev, ...data.photos]));
         setHasMore(data.hasMore);
       }
+    } catch {
+      // Leave the grid as-is; a failed page just stops loading more.
     } finally {
       setLoading(false);
     }

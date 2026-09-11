@@ -34,7 +34,12 @@ services:
       - .:/app
       - node_modules:/app/node_modules
       - uploads:/app/data/uploads
-    command: sh -c "npm install --prefer-offline 2>/dev/null && node node_modules/prisma/build/index.js migrate deploy && npm run dev"
+    # The `deps` stage ships no entrypoint, but a cached image built from the full
+    # Dockerfile still carries the production `./entrypoint.sh`. Clear it explicitly so
+    # the dev command below runs (otherwise the service dies on a missing entrypoint),
+    # and keep stderr visible so a failed install is not mistaken for a silent success.
+    entrypoint: []
+    command: sh -c "npm install --prefer-offline && node node_modules/prisma/build/index.js migrate deploy && npm run dev"
     depends_on:
       db:
         condition: service_healthy

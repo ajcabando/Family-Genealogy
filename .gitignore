@@ -14,3 +14,9 @@ tmp/
 temp/
 
 .opencode/
+
+# OS artifacts
+.DS_Store
+
+# Codebase-graph tooling output
+graphify-out/

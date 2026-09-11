@@ -11,7 +11,12 @@ export function DeleteAlbumButton({ albumId }: { albumId: string }) {
   async function del() {
     if (!window.confirm('Delete this album and remove its photos from the reunion?')) return;
     setBusy(true);
-    await fetch(`/api/reunions/albums/${albumId}`, { method: 'DELETE' });
+    try {
+      await fetch(`/api/reunions/albums/${albumId}`, { method: 'DELETE' });
+    } catch {
+      setBusy(false);
+      return;
+    }
     setBusy(false);
     router.refresh();
   }

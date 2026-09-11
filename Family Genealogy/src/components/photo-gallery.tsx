@@ -66,14 +66,19 @@ export function PhotoGallery({
     if (favoritesOnly) params.set('favorite', '1');
     if (locationFilter) params.set('location', locationFilter);
     if (query) params.set('q', query);
-    const res = await fetch(`/api/photos?${params}`);
-    if (res.ok) {
-      const data = await res.json();
-      setPhotos((prev) => [...prev, ...data.photos]);
-      setHasMore(data.hasMore);
-      setPage((p) => p + 1);
+    try {
+      const res = await fetch(`/api/photos?${params}`);
+      if (res.ok) {
+        const data = await res.json();
+        setPhotos((prev) => [...prev, ...data.photos]);
+        setHasMore(data.hasMore);
+        setPage((p) => p + 1);
+      }
+    } catch {
+      // Keep the gallery as-is; the user can retry with the same button.
+    } finally {
+      setLoadingMore(false);
     }
-    setLoadingMore(false);
   }
 
   function updatePhoto(id: string, patch: Partial<GalleryPhoto>) {
@@ -94,11 +99,16 @@ export function PhotoGallery({
   async function toggleFavorite(photoId: string) {
     if (busy) return;
     setBusy(true);
-    const res = await fetch(`/api/photos/${photoId}/favorite`, { method: 'POST' });
-    if (res.ok) {
-      setPhotos((prev) => prev.map((p) => (p.id === photoId ? { ...p, favorite: !p.favorite } : p)));
+    try {
+      const res = await fetch(`/api/photos/${photoId}/favorite`, { method: 'POST' });
+      if (res.ok) {
+        setPhotos((prev) => prev.map((p) => (p.id === photoId ? { ...p, favorite: !p.favorite } : p)));
+      }
+    } catch {
+      // Leave the optimistic state untouched when the request never landed.
+    } finally {
+      setBusy(false);
     }
-    setBusy(false);
   }
 
   return (

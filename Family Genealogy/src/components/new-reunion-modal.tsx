@@ -17,16 +17,23 @@ export function NewReunionModal({ isAdmin, label = 'New reunion' }: { isAdmin: b
     e.preventDefault();
     setError('');
     setSending(true);
-    const res = await fetch('/api/reunions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(form),
-    });
-    const data = await res.json();
-    setSending(false);
-    if (!res.ok) {
-      setError(data.error || 'Could not create reunion');
+    let data: { id?: string; error?: string } = {};
+    try {
+      const res = await fetch('/api/reunions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      });
+      data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(data.error || 'Could not create reunion');
+        return;
+      }
+    } catch {
+      setError('Network error — please try again.');
       return;
+    } finally {
+      setSending(false);
     }
     setOpen(false);
     router.push(`/reunions/${data.id}`);

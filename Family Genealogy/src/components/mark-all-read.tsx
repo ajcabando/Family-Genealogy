@@ -8,7 +8,11 @@ export function MarkAllRead() {
   return (
     <button
       onClick={async () => {
-        await fetch('/api/notifications/read', { method: 'POST' });
+        try {
+          await fetch('/api/notifications/read', { method: 'POST' });
+        } catch {
+          return;
+        }
         router.refresh();
       }}
       className="btn-ghost text-xs"

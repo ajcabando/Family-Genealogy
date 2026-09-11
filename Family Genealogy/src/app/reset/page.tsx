@@ -26,31 +26,39 @@ function ResetForm() {
   async function requestReset(e: React.FormEvent) {
     e.preventDefault();
     setError('');
-    const res = await fetch('/api/auth/reset/request', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email }),
-    });
-    const data = await res.json();
-    if (!res.ok) setError(data.error || 'Request failed');
-    else {
-      setMessage(data.message || 'If that email exists, a reset link has been generated.');
-      // MVP has no email provider — surface the reset link in the response.
-      if (data.resetLink) setDevToken(data.resetLink);
+    try {
+      const res = await fetch('/api/auth/reset/request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json();
+      if (!res.ok) setError(data.error || 'Request failed');
+      else {
+        setMessage(data.message || 'If that email exists, a reset link has been generated.');
+        // MVP has no email provider — surface the reset link in the response.
+        if (data.resetLink) setDevToken(data.resetLink);
+      }
+    } catch {
+      setError('Network error — please try again.');
     }
   }
 
   async function doReset(e: React.FormEvent) {
     e.preventDefault();
     setError('');
-    const res = await fetch('/api/auth/reset', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token, password }),
-    });
-    const data = await res.json();
-    if (!res.ok) setError(data.error || 'Reset failed');
-    else setMessage('Password updated. You can now sign in.');
+    try {
+      const res = await fetch('/api/auth/reset', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token, password }),
+      });
+      const data = await res.json();
+      if (!res.ok) setError(data.error || 'Reset failed');
+      else setMessage('Password updated. You can now sign in.');
+    } catch {
+      setError('Network error — please try again.');
+    }
   }
 
   return (

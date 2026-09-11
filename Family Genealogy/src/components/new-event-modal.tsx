@@ -17,16 +17,22 @@ export function NewEventModal({ isAdmin }: { isAdmin: boolean }) {
     e.preventDefault();
     setError('');
     setSending(true);
-    const res = await fetch('/api/events', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(form),
-    });
-    setSending(false);
-    if (!res.ok) {
-      const d = await res.json();
-      setError(d.error || 'Could not add event');
+    try {
+      const res = await fetch('/api/events', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        setError(d.error || 'Could not add event');
+        return;
+      }
+    } catch {
+      setError('Network error — please try again.');
       return;
+    } finally {
+      setSending(false);
     }
     setOpen(false);
     setForm({ title: '', eventDate: '', eventType: 'MILESTONE', description: '' });
