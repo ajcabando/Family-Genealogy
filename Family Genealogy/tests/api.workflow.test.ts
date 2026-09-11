@@ -229,6 +229,91 @@ describe.skipIf(!live)('API workflow (requires running app)', () => {
     expect(r.status).toBe(403);
   });
 
+  it('pins and unpins an album cover, enforcing admin-only access', async () => {
+    // Fresh reunion + album for this test (cleaned up at the end)
+    const evRes = await admin.request('/api/reunions', {
+      method: 'POST',
+      body: JSON.stringify({ name: `Cover Test ${suffix}`, date: '2026-12-01', location: 'Testville' }),
+    });
+    const { id: eventId } = (await evRes.json()) as { id: string };
+    expect(evRes.status).toBe(200);
+
+    const albumRes = await admin.request(`/api/reunions/${eventId}/albums`, {
+      method: 'POST',
+      body: JSON.stringify({ name: 'Cover Test Album' }),
+    });
+    const { id: albumId } = (await albumRes.json()) as { id: string };
+    expect(albumRes.status).toBe(200);
+
+    // Upload a photo straight into the album, then approve it
+    const img = Buffer.from(
+      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+      'base64',
+    );
+    const fd = new FormData();
+    fd.append('file', new Blob([img], { type: 'image/png' }), 'cover.png');
+    fd.append('caption', 'cover test photo');
+    fd.append('albumId', albumId);
+    const upload = await admin.request('/api/photos', { method: 'POST', body: fd });
+    const uploadJson = (await upload.json()) as { photos: Array<{ id: string }> };
+    expect(upload.status).toBe(200);
+    const photoId = uploadJson.photos[0].id;
+    const approve = await admin.request(`/api/photos/${photoId}/review`, {
+      method: 'PATCH',
+      body: JSON.stringify({ action: 'approve' }),
+    });
+    expect(approve.status).toBe(200);
+
+    // Anonymous users cannot pin
+    const anon = await fetch(`${BASE}/api/reunions/albums/${albumId}/cover`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ photoId }),
+    });
+    expect(anon.status).toBe(401);
+
+    // Members cannot pin
+    const member = makeClient();
+    await member.request('/api/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ email: memberEmail, password: 'TestPass123!' }),
+    });
+    const memberPin = await member.request(`/api/reunions/albums/${albumId}/cover`, {
+      method: 'PUT',
+      body: JSON.stringify({ photoId }),
+    });
+    expect(memberPin.status).toBe(403);
+
+    // Pinning a photo that is not in the album is rejected
+    const badPin = await admin.request(`/api/reunions/albums/${albumId}/cover`, {
+      method: 'PUT',
+      body: JSON.stringify({ photoId: 'not-in-album' }),
+    });
+    expect(badPin.status).toBe(400);
+
+    // Admin pins the cover and it sticks
+    const pin = await admin.request(`/api/reunions/albums/${albumId}/cover`, {
+      method: 'PUT',
+      body: JSON.stringify({ photoId }),
+    });
+    expect(pin.status).toBe(200);
+    const albumInfo = (await (await admin.request(`/api/reunions/albums/${albumId}`)).json()) as { coverPhotoId: string | null };
+    expect(albumInfo.coverPhotoId).toBe(photoId);
+
+    // Unpinning clears it
+    const unpin = await admin.request(`/api/reunions/albums/${albumId}/cover`, {
+      method: 'PUT',
+      body: JSON.stringify({ photoId: null }),
+    });
+    expect(unpin.status).toBe(200);
+    const albumInfo2 = (await (await admin.request(`/api/reunions/albums/${albumId}`)).json()) as { coverPhotoId: string | null };
+    expect(albumInfo2.coverPhotoId).toBeNull();
+
+    // Cleanup: deleting the event cascades the album; photo is soft-deleted
+    await admin.request(`/api/reunions/${eventId}`, { method: 'DELETE' });
+    await admin.request(`/api/photos/${photoId}`, { method: 'DELETE' });
+  });
+
   afterAll(async () => {
     // Cleanup: soft-delete the test member and any uploaded photo, disable the test user
     if (memberId) await admin.request(`/api/members/${memberId}`, { method: 'DELETE' });

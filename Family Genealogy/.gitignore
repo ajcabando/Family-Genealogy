@@ -10,3 +10,5 @@ dist/
 uploads/
 data/
 next-env.d.ts
+tsconfig.tsbuildinfo
+graphify-out/

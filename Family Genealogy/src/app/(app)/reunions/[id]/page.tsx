@@ -175,6 +175,11 @@ async function AlbumGrid({
           <div key={a.id} className="card group overflow-hidden transition hover:-translate-y-0.5 hover:shadow-lift">
             <Link href={`/reunions/${reunionId}?album=${a.id}`} className="relative block h-44 overflow-hidden">
               {isAdmin && <span className="absolute right-2 top-2 z-10"><AlbumCoverButton albumId={a.id} coverPhotoId={a.coverPhotoId} /></span>}
+              {isAdmin && a.coverPhotoId && (
+                <span className="absolute left-2 top-2 z-10 rounded-full bg-goldDeep px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white shadow-card">
+                  Pinned
+                </span>
+              )}
               {cover ? (
                 <img src={photoUrl(cover, 'full')} alt="" className="h-full w-full object-cover transition duration-300 group-hover:scale-105" />
               ) : (
