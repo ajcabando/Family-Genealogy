@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0f172a"/>
+      <stop offset="0.4" stop-color="#312e81"/>
+      <stop offset="0.65" stop-color="#6d28d9"/>
+      <stop offset="0.85" stop-color="#be185d"/>
+      <stop offset="1" stop-color="#7c2d12"/>
+    </linearGradient>
+    <linearGradient id="mist" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fbbf24" stop-opacity="0.5"/>
+      <stop offset="1" stop-color="#fbbf24" stop-opacity="0"/>
+    </linearGradient>
+    <radialGradient id="sun" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#fef3c7"/>
+      <stop offset="0.5" stop-color="#f59e0b" stop-opacity="0.7"/>
+      <stop offset="1" stop-color="#f59e0b" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="1600" height="900" fill="url(#sky)"/>
+
+  <!-- sun -->
+  <circle cx="1180" cy="470" r="180" fill="url(#sun)"/>
+  <circle cx="1180" cy="470" r="64" fill="#fde68a"/>
+
+  <!-- stars -->
+  <g fill="#ffffff">
+    <circle cx="120" cy="120" r="2" opacity="0.7"/>
+    <circle cx="260" cy="80" r="1.5" opacity="0.5"/>
+    <circle cx="420" cy="160" r="2" opacity="0.6"/>
+    <circle cx="600" cy="90" r="1.5" opacity="0.5"/>
+    <circle cx="760" cy="140" r="2" opacity="0.6"/>
+    <circle cx="900" cy="70" r="1.5" opacity="0.5"/>
+    <circle cx="150" cy="220" r="1.5" opacity="0.4"/>
+    <circle cx="350" cy="40" r="1.5" opacity="0.45"/>
+    <circle cx="960" cy="180" r="1.5" opacity="0.45"/>
+  </g>
+
+  <!-- far mountain range -->
+  <path d="M0 560 L220 330 L380 470 L560 280 L760 500 L950 360 L1150 520 L1330 400 L1600 540 L1600 900 L0 900 Z" fill="#312e81" opacity="0.55"/>
+  <!-- mid mountain range -->
+  <path d="M0 640 L180 470 L360 580 L600 420 L820 610 L1060 470 L1300 620 L1600 520 L1600 900 L0 900 Z" fill="#1e1b4b" opacity="0.75"/>
+  <!-- near hills -->
+  <path d="M0 720 L240 600 L480 690 L760 560 L1040 700 L1320 610 L1600 700 L1600 900 L0 900 Z" fill="#0f172a" opacity="0.92"/>
+
+  <!-- golden mist between ranges -->
+  <ellipse cx="800" cy="660" rx="700" ry="60" fill="url(#mist)" opacity="0.35"/>
+
+  <!-- foreground ground -->
+  <path d="M0 800 Q 400 770 800 800 T 1600 800 L1600 900 L0 900 Z" fill="#0b1020"/>
+
+  <!-- lone pine trees on the right ridge -->
+  <g fill="#0b1020">
+    <path d="M1330 610 L1320 610 L1314 640 L1336 640 Z"/>
+    <path d="M1450 560 L1440 560 L1432 592 L1458 592 Z"/>
+    <path d="M1400 590 L1392 590 L1386 620 L1406 620 Z"/>
+  </g>
+  <g stroke="#0b1020" stroke-width="5" stroke-linecap="round" fill="none">
+    <path d="M1325 612 L1325 700"/>
+    <path d="M1445 562 L1445 680"/>
+  </g>
+</svg>

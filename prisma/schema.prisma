@@ -1,0 +1,376 @@
+// Family Tree & Reunion Archive — data model
+// PostgreSQL via Prisma ORM.
+
+generator client {
+  provider        = "prisma-client-js"
+  binaryTargets   = ["native", "debian-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Auth
+// ---------------------------------------------------------------------------
+
+enum Role {
+  ADMIN
+  MEMBER
+}
+
+enum UserStatus {
+  PENDING // registered, awaiting admin approval
+  ACTIVE
+  DISABLED
+}
+
+model User {
+  id             String       @id @default(cuid())
+  email          String       @unique
+  passwordHash   String
+  role           Role         @default(MEMBER)
+  status         UserStatus   @default(PENDING)
+  familyMemberId String?      @unique
+  familyMember   FamilyMember? @relation("UserMember", fields: [familyMemberId], references: [id], onDelete: SetNull)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  submittedRequests ChangeRequest[] @relation("SubmittedBy")
+  reviewedRequests  ChangeRequest[] @relation("ReviewedBy")
+  auditLogs       AuditLog[]
+  notifications   Notification[]
+  createdReunions ReunionEvent[]
+  resetTokens     PasswordResetToken[]
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+// ---------------------------------------------------------------------------
+// Family
+// ---------------------------------------------------------------------------
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+  UNKNOWN
+}
+
+model FamilyMember {
+  id             String    @id @default(cuid())
+  firstName      String
+  middleName     String?
+  lastName       String
+  maidenName     String?
+  nickname       String?
+  gender         Gender    @default(UNKNOWN)
+  birthDate      DateTime?
+  birthPlace     String?
+  deathDate      DateTime?
+  deathPlace     String?
+  biography      String?
+  occupation     String?
+  location       String? // general location only — never exact addresses
+  branch         String? // family branch, e.g. "Cruz"
+  profilePhotoId String?
+  profilePhoto   Photo?    @relation("MemberProfilePhoto", fields: [profilePhotoId], references: [id], onDelete: SetNull)
+  createdById    String?
+  deletedAt      DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  user              User?        @relation("UserMember")
+  photoTags         PhotoTag[]
+  photoComments     PhotoComment[]
+  photosUploaded    Photo[]      @relation("UploadedByMember")
+  relationshipsAs1  Relationship[] @relation("RelPerson")
+  relationshipsAs2  Relationship[] @relation("RelRelated")
+  submittedRequests ChangeRequest[] @relation("TargetMember")
+
+  @@index([lastName, firstName])
+  @@index([branch])
+  @@index([deletedAt])
+}
+
+enum RelationshipType {
+  PARENT // personId is parent of relatedPersonId
+  SPOUSE
+  SIBLING
+  ADOPTED_PARENT
+  ADOPTED_CHILD
+  STEP_PARENT
+  STEP_CHILD
+}
+
+enum RelationshipStatus {
+  ACTIVE
+  ENDED // e.g. divorce
+}
+
+model Relationship {
+  id             String           @id @default(cuid())
+  personId       String
+  relatedPersonId String
+  type           RelationshipType
+  status         RelationshipStatus @default(ACTIVE)
+  startDate      DateTime? // e.g. marriage date
+  endDate        DateTime?
+  addedById      String?
+  createdAt      DateTime         @default(now())
+
+  person         FamilyMember     @relation("RelPerson", fields: [personId], references: [id], onDelete: Cascade)
+  relatedPerson  FamilyMember     @relation("RelRelated", fields: [relatedPersonId], references: [id], onDelete: Cascade)
+
+  @@index([personId, type])
+  @@index([relatedPersonId, type])
+  @@unique([personId, relatedPersonId, type])
+}
+
+// ---------------------------------------------------------------------------
+// Photos
+// ---------------------------------------------------------------------------
+
+enum PhotoStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model Photo {
+  id             String      @id @default(cuid())
+  filePath       String // relative to UPLOAD_DIR
+  optimizedPath  String?
+  thumbPath      String
+  caption        String?
+  description    String?
+  photoDate      DateTime?
+  location       String?
+  photographer   String?
+  width          Int?
+  height         Int?
+  uploadedById   String?
+  uploader       FamilyMember? @relation("UploadedByMember", fields: [uploadedById], references: [id], onDelete: SetNull)
+  approvalStatus PhotoStatus  @default(PENDING)
+  favorite       Boolean      @default(false)
+  deletedAt      DateTime?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  tags            PhotoTag[]
+  comments        PhotoComment[]
+  albums          AlbumPhoto[]
+  profileFor      FamilyMember[] @relation("MemberProfilePhoto")
+  coverForReunion ReunionEvent[] @relation("ReunionCover")
+  coverForAlbum   ReunionAlbum[] @relation("AlbumCover")
+
+  @@index([approvalStatus, createdAt])
+  @@index([uploadedById])
+  @@index([photoDate])
+}
+
+model PhotoTag {
+  id            String       @id @default(cuid())
+  photoId       String
+  memberId      String
+  taggedById    String?
+  // Optional on-photo placement, stored as a percentage (0-100) of the image
+  // area so markers stay aligned across every rendered size.
+  xPosition     Float?
+  yPosition     Float?
+  createdAt     DateTime     @default(now())
+
+  photo         Photo        @relation(fields: [photoId], references: [id], onDelete: Cascade)
+  member        FamilyMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@unique([photoId, memberId])
+  @@index([memberId])
+}
+
+model PhotoComment {
+  id          String       @id @default(cuid())
+  photoId     String
+  authorId    String
+  body        String
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  photo       Photo        @relation(fields: [photoId], references: [id], onDelete: Cascade)
+  author      FamilyMember @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([photoId, createdAt])
+  @@index([authorId])
+}
+
+// ---------------------------------------------------------------------------
+// Reunions
+// ---------------------------------------------------------------------------
+
+model ReunionEvent {
+  id            String    @id @default(cuid())
+  name          String
+  date          DateTime
+  location      String?
+  description   String?
+  coverPhotoId  String?
+  coverPhoto    Photo?    @relation("ReunionCover", fields: [coverPhotoId], references: [id], onDelete: SetNull)
+  createdById   String?
+  createdBy     User?     @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  albums        ReunionAlbum[]
+
+  @@index([date])
+}
+
+model ReunionAlbum {
+  id             String        @id @default(cuid())
+  reunionEventId String
+  name           String
+  description    String?
+  coverPhotoId   String?
+  coverPhoto     Photo?        @relation("AlbumCover", fields: [coverPhotoId], references: [id], onDelete: SetNull)
+  createdAt      DateTime      @default(now())
+
+  reunionEvent   ReunionEvent  @relation(fields: [reunionEventId], references: [id], onDelete: Cascade)
+  photos         AlbumPhoto[]
+
+  @@index([reunionEventId])
+}
+
+model AlbumPhoto {
+  id         String       @id @default(cuid())
+  albumId    String
+  photoId    String
+  addedById  String?
+  createdAt  DateTime     @default(now())
+
+  album      ReunionAlbum @relation(fields: [albumId], references: [id], onDelete: Cascade)
+  photo      Photo        @relation(fields: [photoId], references: [id], onDelete: Cascade)
+
+  @@unique([albumId, photoId])
+  @@index([photoId])
+}
+
+// ---------------------------------------------------------------------------
+// Change requests & audit
+// ---------------------------------------------------------------------------
+
+enum ChangeRequestType {
+  NEW_MEMBER
+  RELATIONSHIP
+  PROFILE_UPDATE
+}
+
+enum ChangeRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  NEEDS_INFO
+}
+
+model ChangeRequest {
+  id            String              @id @default(cuid())
+  requestType   ChangeRequestType
+  targetType    String // "family_member" | "relationship" | "new_member"
+  targetId      String? // member or relationship id when applicable
+  submittedById String
+  submittedBy   User                @relation("SubmittedBy", fields: [submittedById], references: [id], onDelete: Cascade)
+  oldData       Json?
+  proposedData  Json
+  reason        String?
+  status        ChangeRequestStatus @default(PENDING)
+  reviewedById  String?
+  reviewedBy    User?               @relation("ReviewedBy", fields: [reviewedById], references: [id], onDelete: SetNull)
+  reviewedAt    DateTime?
+  reviewNotes   String?
+  createdAt     DateTime            @default(now())
+
+  targetMember  FamilyMember?       @relation("TargetMember", fields: [targetId], references: [id], onDelete: SetNull)
+
+  @@index([status, createdAt])
+  @@index([submittedById])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String?
+  userName   String?
+  action     String
+  entityType String?
+  entityId   String?
+  oldValue   Json?
+  newValue   Json?
+  createdAt  DateTime @default(now())
+
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+  @@index([entityType, entityId])
+}
+
+// ---------------------------------------------------------------------------
+// Notifications, timeline milestones, settings
+// ---------------------------------------------------------------------------
+
+enum NotificationType {
+  APPROVAL_RESULT
+  PHOTO_APPROVAL
+  TAG
+  COMMENT
+  NEW_REUNION
+  NEW_MEMBER
+  TREE_UPDATE
+  REQUEST
+  SYSTEM
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      NotificationType
+  title     String
+  body      String?
+  link      String?
+  readAt    DateTime?
+  createdAt DateTime         @default(now())
+
+  @@index([userId, readAt])
+}
+
+enum EventType {
+  MOVE
+  REUNION
+  MILESTONE
+  OTHER
+}
+
+model FamilyEvent {
+  id          String    @id @default(cuid())
+  title       String
+  eventDate   DateTime
+  eventType   EventType @default(OTHER)
+  description String?
+  createdById String?
+  createdAt   DateTime  @default(now())
+
+  @@index([eventDate])
+}
+
+model Setting {
+  key   String @id
+  value String
+}

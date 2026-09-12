@@ -1,0 +1,301 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  @apply bg-appBg text-ink font-body antialiased;
+}
+
+/* Decorative wash so large pages aren't flat, without tinting the whole UI. */
+.app-backdrop {
+  background-image:
+    radial-gradient(60rem 32rem at 15% -8%, rgba(91, 75, 219, 0.07), transparent 60%),
+    radial-gradient(48rem 28rem at 92% 4%, rgba(0, 184, 169, 0.06), transparent 62%);
+}
+
+/* New utility classes for dashboard redesign */
+.stat-card-icon {
+  @apply flex h-12 w-12 items-center justify-center rounded-xl;
+}
+
+.member-card {
+  @apply flex-shrink-0 w-48 snap-start;
+}
+
+.photo-card {
+  @apply relative overflow-hidden rounded-xl;
+}
+
+/* Branch badge colors */
+.branch-cruz { @apply bg-blue-100 text-blue-700; }
+.branch-reyes { @apply bg-green-100 text-green-700; }
+.branch-santos { @apply bg-purple-100 text-purple-700; }
+
+/* Horizontal scroll for member cards */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.font-display {
+  letter-spacing: 0.01em;
+}
+
+/* ---------- scrollbars ---------- */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #c7ccd9 transparent;
+}
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-thumb {
+  background: #c7ccd9;
+  border-radius: 8px;
+}
+
+/* ---------- react flow theming ---------- */
+.react-flow__attribution {
+  display: none;
+}
+.react-flow__controls {
+  box-shadow: 0 4px 20px rgba(20, 25, 50, 0.1);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.react-flow__controls-button {
+  background: #ffffff;
+  border-bottom: 1px solid #e6e9f2;
+  color: #6b7280;
+}
+.react-flow__controls-button:hover {
+  background: #f6f8fc;
+}
+.react-flow__minimap {
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(20, 25, 50, 0.1);
+}
+/* Soft, rounded relationship lines with a gentle focus transition */
+.react-flow__edge-path {
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: opacity 0.2s ease, stroke-width 0.2s ease;
+}
+.react-flow__edge.selected .react-flow__edge-path {
+  stroke: #5b4bdb;
+}
+
+/* ---------- gallery ---------- */
+/* Mobile-first: 2 columns on phones, 3 on tablets, 4+ on desktop */
+.masonry {
+  columns: 2;
+  column-gap: 0.5rem;
+}
+@media (min-width: 640px) {
+  .masonry {
+    columns: 3;
+    column-gap: 0.75rem;
+  }
+}
+@media (min-width: 1024px) {
+  .masonry {
+    columns: 4;
+    column-gap: 1rem;
+  }
+}
+@media (min-width: 1536px) {
+  .masonry {
+    columns: 5;
+  }
+}
+.masonry-item {
+  break-inside: avoid;
+  margin-bottom: 0.5rem;
+}
+@media (min-width: 640px) {
+  .masonry-item {
+    margin-bottom: 0.75rem;
+  }
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-fade-up {
+  animation: fadeUp 0.25s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.animate-fade-in {
+  animation: fadeIn 0.2s ease-out;
+}
+
+/* ---------- photo viewer (premium archive) ---------- */
+.photo-lightbox {
+  color-scheme: dark;
+}
+.photo-lightbox ::selection {
+  background: rgba(124, 92, 252, 0.45);
+}
+/* Thin, light scrollbars inside the dark viewer surfaces */
+.lb-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.22) transparent;
+}
+.lb-scroll::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.lb-scroll::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.22);
+  border-radius: 999px;
+}
+.lb-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+@keyframes photoIn {
+  from {
+    opacity: 0;
+    transform: scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.animate-photo-in {
+  animation: photoIn 0.2s ease-out;
+}
+
+@keyframes heartPop {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.28);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+.animate-heart-pop {
+  animation: heartPop 0.35s ease-out;
+}
+
+@keyframes markerPop {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+.animate-marker-pop {
+  animation: markerPop 0.18s ease-out;
+}
+
+/* ---------- inputs ---------- */
+.input {
+  @apply w-full rounded-xl border border-line bg-white px-3.5 py-2.5 text-sm text-ink placeholder:text-inkSoft/60 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20;
+}
+.label {
+  @apply mb-1 block text-xs font-semibold uppercase tracking-wide text-inkSoft;
+}
+.btn {
+  @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-primary/35 disabled:opacity-50 disabled:cursor-not-allowed;
+}
+.btn-primary {
+  @apply btn bg-primary text-white hover:bg-primaryHover shadow-card;
+}
+.btn-gold {
+  @apply btn bg-gold text-white hover:bg-goldDeep shadow-card;
+}
+.btn-ghost {
+  @apply btn border border-line bg-white text-ink hover:border-primary/40 hover:text-primary;
+}
+.btn-danger {
+  @apply btn bg-rust text-white hover:bg-rust/90;
+}
+.card {
+  @apply rounded-2xl border border-line/70 bg-white shadow-card;
+}
+/* Lighter-weight surface for nested content inside a card. */
+.card-quiet {
+  @apply rounded-2xl border border-line/60 bg-appBg/70;
+}
+
+/* Pill tabs / filters (matching the archive design system) */
+.pill {
+  @apply inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 text-xs font-semibold transition;
+}
+.pill-active {
+  @apply pill bg-primary text-white shadow-card;
+}
+.pill-inactive {
+  @apply pill border border-line bg-white text-inkSoft hover:border-primary/40 hover:text-primary;
+}
+
+/* ---------- Cruz Family Archive helpers ---------- */
+/* Section heading used across pages so type scale stays consistent. */
+.section-title {
+  @apply font-display text-lg font-bold text-ink;
+}
+/* Coloured icon chip behind list/badge icons. */
+.chip {
+  @apply flex h-9 w-9 shrink-0 items-center justify-center rounded-xl;
+}
+/* Soft accent surfaces, one per semantic colour. */
+.chip-purple { @apply bg-accentPurpleSoft text-primary; }
+.chip-teal { @apply bg-accentMint text-accentTeal; }
+.chip-coral { @apply bg-accentCoralSoft text-accentCoral; }
+.chip-gold { @apply bg-accentGoldSoft text-goldDeep; }
+.chip-blue { @apply bg-accentBlueSoft text-accentBlue; }
+.chip-green { @apply bg-accentGreenSoft text-accentGreen; }
+
+.badge {
+  @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-semibold;
+}
+.badge-gold {
+  @apply badge bg-accentGoldSoft text-goldDeep;
+}
+.badge-green {
+  @apply badge bg-sage/15 text-sage;
+}
+.badge-red {
+  @apply badge bg-rust/15 text-rust;
+}
+.badge-neutral {
+  @apply badge bg-ink/5 text-inkSoft;
+}
